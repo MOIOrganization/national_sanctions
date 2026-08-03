@@ -5,99 +5,34 @@ import '../theme/app_colors.dart';
 import '../widgets/header.dart';
 
 class PersonDetailsPage extends StatelessWidget {
-  final SanctionRecord record;
+  final Individual individual;
 
-  const PersonDetailsPage({super.key, required this.record});
+  const PersonDetailsPage({super.key, required this.individual});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(title: 'Record Details', showBackButton: true),
+      appBar: AppBar(title: const Text('Individual Details')),
       body: ListView(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 35,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: Icon(
-                      record.type == 'Individual'
-                          ? Icons.person
-                          : Icons.business,
-                      size: 36,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    record.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    record.type,
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
+          Text(
+            individual.fullName,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 14),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                children: [
-                  _DetailsRow(
-                    label: 'Reference number',
-                    value: record.referenceNumber,
-                  ),
-                  _DetailsRow(label: 'Nationality', value: record.nationality),
-                  _DetailsRow(
-                    label: 'Date of birth',
-                    value: record.dateOfBirth,
-                  ),
-                  _DetailsRow(label: 'Listed on', value: record.listedOn),
-                  _DetailsRow(
-                    label: 'Source',
-                    value: record.source,
-                    showDivider: false,
-                  ),
-                ],
-              ),
+          const SizedBox(height: 12),
+          Text('Reference: ${individual.referenceNumber}'),
+          Text('List type: ${individual.unListType}'),
+          Text('Nationality: ${individual.nationality}'),
+          const SizedBox(height: 16),
+          if (individual.comments.isNotEmpty) ...[
+            const Text(
+              'Comments',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-          ),
-          const SizedBox(height: 14),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Listing information',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    record.reason,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            const SizedBox(height: 6),
+            Text(individual.comments),
+          ],
         ],
       ),
     );

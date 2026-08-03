@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../models.dart';
@@ -14,138 +15,357 @@ class SanctionsPage extends StatefulWidget {
 
 class _SanctionsPageState extends State<SanctionsPage> {
   final SanctionsService _service = SanctionsService();
+
   final TextEditingController _searchController = TextEditingController();
 
-  List<SanctionRecord> _allRecords = [];
-  List<SanctionRecord> _filteredRecords = [];
+  List<Individual> _allIndividuals = [];
+  List<Individual> _filteredIndividuals = [];
 
   bool _isLoading = true;
   String? _errorMessage;
 
+  int _totalRecords = 0;
+
   @override
   void initState() {
     super.initState();
-    _loadRecords();
+
+    debugPrint('');
+    debugPrint('========================================');
+    debugPrint('📄 [SANCTIONS PAGE] initState called');
+    debugPrint('📄 [SANCTIONS PAGE] Starting API loading');
+    debugPrint('========================================');
+
+    _loadIndividuals();
   }
 
-  Future<void> _loadRecords() async {
-    try {
-      final records = await _service.getSanctionRecords();
+  Future<void> _loadIndividuals() async {
+    debugPrint('');
+    debugPrint('🔄 [SANCTIONS PAGE] _loadIndividuals started');
 
-      if (!mounted) return;
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      debugPrint('🔄 [SANCTIONS PAGE] Calling getAllIndividuals...');
+
+      final IndividualResponse response = await _service.getAllIndividuals(
+        offset: 0,
+        limit: 50,
+        language: 'ARAB',
+      );
+
+      debugPrint('✅ [SANCTIONS PAGE] API call completed');
+
+      debugPrint(
+        '✅ [SANCTIONS PAGE] '
+        'Total on server: ${response.totalRecords}',
+      );
+
+      debugPrint(
+        '✅ [SANCTIONS PAGE] '
+        'Received now: ${response.individuals.length}',
+      );
+
+      if (!mounted) {
+        debugPrint('⚠️ [SANCTIONS PAGE] Widget is no longer mounted');
+
+        return;
+      }
 
       setState(() {
-        _allRecords = records;
-        _filteredRecords = records;
+        _allIndividuals = response.individuals;
+        _filteredIndividuals = response.individuals;
+        _totalRecords = response.totalRecords;
         _isLoading = false;
       });
-    } catch (error) {
+
+      debugPrint('✅ [SANCTIONS PAGE] State updated successfully');
+    } catch (error, stackTrace) {
+      debugPrint('');
+      debugPrint('❌ [SANCTIONS PAGE] Loading failed');
+      debugPrint('❌ [SANCTIONS PAGE] Error: $error');
+      debugPrint('❌ [SANCTIONS PAGE] Stack trace: $stackTrace');
+
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = 'Unable to load sanctions records.';
+        _errorMessage = error.toString();
         _isLoading = false;
       });
     }
   }
 
   void _search(String value) {
-    final query = value.trim().toLowerCase();
+    final String query = value.trim().toLowerCase();
+
+    debugPrint('🔎 [SANCTIONS PAGE] Search query: "$query"');
 
     setState(() {
       if (query.isEmpty) {
-        _filteredRecords = _allRecords;
+        _filteredIndividuals = List<Individual>.from(_allIndividuals);
+
+        debugPrint(
+          '🔎 [SANCTIONS PAGE] Search cleared. '
+          'Showing ${_filteredIndividuals.length}',
+        );
+
         return;
       }
 
-      _filteredRecords = _allRecords.where((record) {
-        return record.name.toLowerCase().contains(query) ||
-            record.nationality.toLowerCase().contains(query) ||
-            record.referenceNumber.toLowerCase().contains(query);
+      _filteredIndividuals = _allIndividuals.where((individual) {
+        final String aliases = individual.aliases
+            .map((alias) => alias.name)
+            .join(' ')
+            .toLowerCase();
+
+        final String designations = individual.designations
+            .join(' ')
+            .toLowerCase();
+
+        return individual.fullName.toLowerCase().contains(query) ||
+            individual.referenceNumber.toLowerCase().contains(query) ||
+            individual.unListType.toLowerCase().contains(query) ||
+            individual.nationality.toLowerCase().contains(query) ||
+            aliases.contains(query) ||
+            designations.contains(query);
       }).toList();
+
+      debugPrint(
+        '🔎 [SANCTIONS PAGE] '
+        'Matching results: ${_filteredIndividuals.length}',
+      );
     });
   }
 
   @override
   void dispose() {
+    debugPrint('📄 [SANCTIONS PAGE] dispose called');
+
     _searchController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '🏗️ [SANCTIONS PAGE] build called '
+      '| loading=$_isLoading '
+      '| error=$_errorMessage '
+      '| records=${_filteredIndividuals.length}',
+    );
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: TextField(
             controller: _searchController,
-            onChanged: _search,
-            decoration: const InputDecoration(
+            onChanged: (value) {
+              _search(value);
+            },
+            decoration: InputDecoration(
               hintText: 'Search name or reference number',
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        debugPrint(
+                          '🧹 [SANCTIONS PAGE] '
+                          'Clear search pressed',
+                        );
+
+                        _searchController.clear();
+                        _search('');
+                      },
+                      icon: const Icon(Icons.close),
+                    )
+                  : null,
             ),
           ),
         ),
+        if (!_isLoading && _errorMessage == null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Showing ${_filteredIndividuals.length} '
+                    'of $_totalRecords records',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Refresh',
+                  onPressed: _loadIndividuals,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+          ),
         Expanded(child: _buildContent()),
       ],
     );
   }
 
   Widget _buildContent() {
+    debugPrint(
+      '🧱 [SANCTIONS PAGE] _buildContent '
+      '| loading=$_isLoading '
+      '| error=$_errorMessage',
+    );
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 14),
+            Text('Loading individuals...'),
+          ],
+        ),
+      );
     }
 
     if (_errorMessage != null) {
-      return Center(child: Text(_errorMessage!));
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 54, color: Colors.red),
+              const SizedBox(height: 12),
+              const Text(
+                'Unable to load individuals',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              SelectableText(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () {
+                  debugPrint('🔁 [SANCTIONS PAGE] Try Again pressed');
+
+                  _loadIndividuals();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    if (_filteredRecords.isEmpty) {
-      return const Center(child: Text('No matching records found.'));
+    if (_filteredIndividuals.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadIndividuals,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 160),
+            Icon(
+              Icons.person_search_outlined,
+              size: 52,
+              color: AppColors.textSecondary,
+            ),
+            SizedBox(height: 12),
+            Center(child: Text('No matching individuals found.')),
+          ],
+        ),
+      );
     }
 
     return RefreshIndicator(
-      onRefresh: _loadRecords,
+      onRefresh: _loadIndividuals,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-        itemCount: _filteredRecords.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        itemCount: _filteredIndividuals.length,
+        separatorBuilder: (_, __) {
+          return const SizedBox(height: 10);
+        },
         itemBuilder: (context, index) {
-          final record = _filteredRecords[index];
+          final Individual individual = _filteredIndividuals[index];
+
+          if (index < 3) {
+            debugPrint(
+              '🪪 [SANCTIONS PAGE] Building card '
+              '$index: ${individual.fullName}',
+            );
+          }
 
           return Card(
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                child: Icon(
-                  record.type == 'Individual'
-                      ? Icons.person_outline
-                      : Icons.business_outlined,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.10),
+                child: const Icon(
+                  Icons.person_outline,
                   color: AppColors.primary,
                 ),
               ),
               title: Text(
-                record.name,
+                individual.fullName.isEmpty
+                    ? 'Unnamed individual'
+                    : individual.fullName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 7),
-                child: Text(
-                  '${record.type}\nReference: ${record.referenceNumber}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (individual.referenceNumber.isNotEmpty)
+                      Text(
+                        'Reference: '
+                        '${individual.referenceNumber}',
+                      ),
+                    if (individual.unListType.isNotEmpty)
+                      Text('List: ${individual.unListType}'),
+                    if (individual.nationality.isNotEmpty)
+                      Text(
+                        'Nationality: '
+                        '${individual.nationality}',
+                      ),
+                  ],
                 ),
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
+              onTap: () async {
+                debugPrint('');
+                debugPrint('👆 [SANCTIONS PAGE] Record pressed');
+                debugPrint(
+                  '👆 [SANCTIONS PAGE] '
+                  'Data ID: ${individual.dataId}',
+                );
+                debugPrint(
+                  '👆 [SANCTIONS PAGE] '
+                  'Name: ${individual.fullName}',
+                );
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PersonDetailsPage(record: record),
+                    builder: (_) => PersonDetailsPage(individual: individual),
                   ),
                 );
               },
