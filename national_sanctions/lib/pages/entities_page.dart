@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../services/sanctions_service.dart';
 import '../theme/app_colors.dart';
+import 'entity_details_page.dart';
 
 class EntitiesPage extends StatefulWidget {
   const EntitiesPage({super.key});
@@ -13,7 +14,6 @@ class EntitiesPage extends StatefulWidget {
 
 class _EntitiesPageState extends State<EntitiesPage> {
   final SanctionsService _service = SanctionsService();
-
   final TextEditingController _searchController = TextEditingController();
 
   List<Map<String, dynamic>> _allEntities = [];
@@ -27,29 +27,22 @@ class _EntitiesPageState extends State<EntitiesPage> {
   @override
   void initState() {
     super.initState();
-
-    debugPrint('');
-    debugPrint('========================================');
-    debugPrint('🏢 [ENTITIES PAGE] Page opened');
-    debugPrint('🏢 [ENTITIES PAGE] Loading entities');
-    debugPrint('========================================');
-
     _loadEntities();
   }
 
   Future<void> _loadEntities() async {
-    debugPrint('🔄 [ENTITIES PAGE] _loadEntities started');
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final Map<String, dynamic> response = await _service.getAllEntities(
         offset: 0,
         limit: 50,
-        //limit:1000
+        // limit: 1000,
         language: 'ARAB',
       );
 
@@ -66,35 +59,17 @@ class _EntitiesPageState extends State<EntitiesPage> {
         entities = [];
       }
 
-      final int totalRecords = _toInt(response['total_records']);
-
-      debugPrint('✅ [ENTITIES PAGE] Total records: $totalRecords');
-
-      debugPrint(
-        '✅ [ENTITIES PAGE] Records received: '
-        '${entities.length}',
-      );
-
-      for (final entity in entities.take(5)) {
-        debugPrint(
-          '🏢 [ENTITY] '
-          'ID=${entity['DATAID']} '
-          '| Name=${entity['FIRST_NAME']} '
-          '| Reference=${entity['REFERENCE_NUMBER']}',
-        );
-      }
-
       if (!mounted) return;
 
       setState(() {
         _allEntities = entities;
         _filteredEntities = entities;
-        _totalRecords = totalRecords;
+        _totalRecords = _toInt(response['total_records']);
         _isLoading = false;
       });
     } catch (error, stackTrace) {
       debugPrint('❌ [ENTITIES PAGE] Error: $error');
-      debugPrint('❌ [ENTITIES PAGE] Stack trace: $stackTrace');
+      debugPrintStack(stackTrace: stackTrace);
 
       if (!mounted) return;
 
@@ -108,8 +83,6 @@ class _EntitiesPageState extends State<EntitiesPage> {
   void _search(String value) {
     final String query = value.trim().toLowerCase();
 
-    debugPrint('🔎 [ENTITIES PAGE] Search query: "$query"');
-
     setState(() {
       if (query.isEmpty) {
         _filteredEntities = List<Map<String, dynamic>>.from(_allEntities);
@@ -118,6 +91,8 @@ class _EntitiesPageState extends State<EntitiesPage> {
       }
 
       _filteredEntities = _allEntities.where((entity) {
+        final String dataId = _text(entity['DATAID']).toLowerCase();
+
         final String name = _text(entity['FIRST_NAME']).toLowerCase();
 
         final String referenceNumber = _text(
@@ -132,7 +107,8 @@ class _EntitiesPageState extends State<EntitiesPage> {
 
         final String addresses = _entityAddresses(entity).toLowerCase();
 
-        return name.contains(query) ||
+        return dataId.contains(query) ||
+            name.contains(query) ||
             referenceNumber.contains(query) ||
             listType.contains(query) ||
             comments.contains(query) ||
@@ -140,23 +116,10 @@ class _EntitiesPageState extends State<EntitiesPage> {
             addresses.contains(query);
       }).toList();
     });
-
-    debugPrint(
-      '🔎 [ENTITIES PAGE] Matches: '
-      '${_filteredEntities.length}',
-    );
   }
 
-  Future<void> _openEntityDetails(Map<String, dynamic> entity) async {
+  void _openEntityDetails(Map<String, dynamic> entity) {
     final int dataId = _toInt(entity['DATAID']);
-
-    debugPrint('');
-    debugPrint('👆 [ENTITIES PAGE] Entity pressed');
-    debugPrint('👆 [ENTITIES PAGE] Data ID: $dataId');
-    debugPrint(
-      '👆 [ENTITIES PAGE] Name: '
-      '${_text(entity['FIRST_NAME'])}',
-    );
 
     if (dataId == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -168,41 +131,13 @@ class _EntitiesPageState extends State<EntitiesPage> {
       return;
     }
 
-    try {
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) {
-          return const Center(child: CircularProgressIndicator());
-        },
-      );
-
-      final Map<String, dynamic> fullEntity = await _service.getEntityById(
-        dataId: dataId,
-        language: 'ARAB',
-      );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop();
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EntityDetailsPage(entity: fullEntity),
-        ),
-      );
-    } catch (error) {
-      debugPrint('❌ [ENTITIES PAGE] Details error: $error');
-
-      if (!mounted) return;
-
-      Navigator.of(context).pop();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to load entity details: $error')),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            EntityDetailsPage(dataId: dataId, initialEntity: entity),
+      ),
+    );
   }
 
   @override
@@ -221,7 +156,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
             controller: _searchController,
             onChanged: _search,
             decoration: InputDecoration(
-              hintText: 'Search entity or reference number',
+              hintText: 'Search by ID, entity or reference number',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -345,6 +280,8 @@ class _EntitiesPageState extends State<EntitiesPage> {
 
           final String listType = _text(entity['UN_LIST_TYPE']);
 
+          final int dataId = _toInt(entity['DATAID']);
+
           final int aliasesCount = _listLength(entity['ALIASES']);
 
           final int addressesCount = _listLength(entity['ADDRESSES']);
@@ -368,6 +305,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (dataId != 0) Text('ID: $dataId'),
                     if (referenceNumber.isNotEmpty)
                       Text('Reference: $referenceNumber'),
                     if (listType.isNotEmpty) Text('List: $listType'),
@@ -414,6 +352,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
           return [
             _text(address['STREET']),
             _text(address['CITY']),
+            _text(address['STATE_PROVINCE']),
             _text(address['COUNTRY']),
           ].where((value) => value.isNotEmpty).join(' ');
         })
@@ -434,236 +373,5 @@ class _EntitiesPageState extends State<EntitiesPage> {
 
   String _text(dynamic value) {
     return value?.toString().trim() ?? '';
-  }
-}
-
-class EntityDetailsPage extends StatelessWidget {
-  final Map<String, dynamic> entity;
-
-  const EntityDetailsPage({super.key, required this.entity});
-
-  @override
-  Widget build(BuildContext context) {
-    final String name = entity['FIRST_NAME']?.toString().trim() ?? '';
-
-    final String reference =
-        entity['REFERENCE_NUMBER']?.toString().trim() ?? '';
-
-    final String listType = entity['UN_LIST_TYPE']?.toString().trim() ?? '';
-
-    final String comments = entity['COMMENTS1']?.toString().trim() ?? '';
-
-    final List<Map<String, dynamic>> aliases = _convertList(entity['ALIASES']);
-
-    final List<Map<String, dynamic>> addresses = _convertList(
-      entity['ADDRESSES'],
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Entity Details')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 35,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                    child: const Icon(
-                      Icons.business,
-                      size: 36,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    name.isEmpty ? 'Unnamed entity' : name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                children: [
-                  _EntityDetailRow(label: 'Reference', value: reference),
-                  _EntityDetailRow(
-                    label: 'List type',
-                    value: listType,
-                    showDivider: false,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (comments.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _EntitySection(
-              title: 'Comments',
-              child: Text(comments, style: const TextStyle(height: 1.6)),
-            ),
-          ],
-          if (aliases.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _EntitySection(
-              title: 'Aliases',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: aliases.map((alias) {
-                  final String aliasName =
-                      alias['ALIAS_NAME']?.toString().trim() ?? '';
-
-                  final String quality =
-                      alias['QUALITY']?.toString().trim() ?? '';
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      quality.isEmpty ? aliasName : '$aliasName\n$quality',
-                      style: const TextStyle(height: 1.5),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-          if (addresses.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _EntitySection(
-              title: 'Addresses',
-              child: Column(
-                children: addresses.map((address) {
-                  final String street =
-                      address['STREET']?.toString().trim() ?? '';
-
-                  final String city = address['CITY']?.toString().trim() ?? '';
-
-                  final String country =
-                      address['COUNTRY']?.toString().trim() ?? '';
-
-                  final String displayAddress = [
-                    street,
-                    city,
-                    country,
-                  ].where((value) => value.isNotEmpty).join(', ');
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            displayAddress,
-                            style: const TextStyle(height: 1.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  static List<Map<String, dynamic>> _convertList(dynamic value) {
-    if (value is! List) {
-      return [];
-    }
-
-    return value
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
-  }
-}
-
-class _EntitySection extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _EntitySection({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EntityDetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool showDivider;
-
-  const _EntityDetailRow({
-    required this.label,
-    required this.value,
-    this.showDivider = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 110,
-                child: Text(
-                  label,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  value.isEmpty ? 'Not available' : value,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (showDivider) const Divider(height: 1),
-      ],
-    );
   }
 }
