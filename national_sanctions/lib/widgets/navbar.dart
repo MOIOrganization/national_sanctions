@@ -31,11 +31,6 @@ class AppNavbar extends StatelessWidget {
           selectedIcon: Icon(Icons.business),
           label: 'Entities',
         ),
-        NavigationDestination(
-          icon: Icon(Icons.info_outline),
-          selectedIcon: Icon(Icons.info),
-          label: 'About',
-        ),
       ],
     );
   }

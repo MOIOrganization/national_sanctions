@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pages/about_page.dart';
 import 'pages/home_page.dart';
-import 'pages/login_page.dart';
 import 'pages/individuals_page.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
@@ -22,7 +20,7 @@ class NationalSanctionsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'National Sanctions',
       theme: AppTheme.lightTheme,
-      home: const LoginPage(),
+      home: const MainScreen(),
     );
   }
 }
@@ -68,7 +66,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       const IndividualsPage(),
       const EntitiesPage(),
-      const AboutPage(),
+      // const AboutPage(),
     ];
   }
 
