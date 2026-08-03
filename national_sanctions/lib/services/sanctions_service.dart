@@ -125,6 +125,7 @@ class SanctionsService {
   Future<IndividualResponse> getAllIndividuals({
     int offset = 0,
     int limit = 50,
+    // int limit = 1000,
     String language = 'ARAB',
   }) async {
     final Map<String, dynamic> responseJson = await _postWithSession(
@@ -203,6 +204,7 @@ class SanctionsService {
 
   Future<Map<String, dynamic>> getAllEntities({
     int offset = 0,
+    // int limit = 1000,
     int limit = 50,
     String language = 'ARAB',
   }) async {

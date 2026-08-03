@@ -39,11 +39,13 @@ class Individual {
   final String secondName;
   final String thirdName;
   final String fourthName;
+  final String originalScriptName;
 
   final String unListType;
   final String referenceNumber;
   final String comments;
   final String hasInterpolLink;
+  final String interpolLink;
 
   final int sourceFileId;
   final DateTime? createdDate;
@@ -55,7 +57,7 @@ class Individual {
   final List<IndividualDocument> documents;
   final List<IndividualPlaceOfBirth> placesOfBirth;
   final List<IndividualAttribute> attributes;
-
+  final Map<String, dynamic> rawData;
   const Individual({
     required this.dataId,
     required this.versionNumber,
@@ -63,10 +65,12 @@ class Individual {
     required this.secondName,
     required this.thirdName,
     required this.fourthName,
+    required this.originalScriptName,
     required this.unListType,
     required this.referenceNumber,
     required this.comments,
     required this.hasInterpolLink,
+    required this.interpolLink,
     required this.sourceFileId,
     required this.createdDate,
     required this.lastUpdatedDate,
@@ -76,6 +80,7 @@ class Individual {
     required this.documents,
     required this.placesOfBirth,
     required this.attributes,
+    required this.rawData,
   });
 
   String get fullName {
@@ -116,10 +121,12 @@ class Individual {
       secondName: _toText(json['SECOND_NAME']),
       thirdName: _toText(json['THIRD_NAME']),
       fourthName: _toText(json['FOURTH_NAME']),
+      originalScriptName: _toText(json['NAME_ORIGINAL_SCRIPT']),
       unListType: _toText(json['UN_LIST_TYPE']),
       referenceNumber: _toText(json['REFERENCE_NUMBER']),
       comments: _toText(json['COMMENTS1']),
       hasInterpolLink: _toText(json['HAS_INTERPOL_LINK']),
+      interpolLink: _toText(json['INTERPOL_LINK']),
       sourceFileId: _toInt(json['SOURCE_FILE_ID']),
       createdDate: _toDateTime(json['CREATED_DATE']),
       lastUpdatedDate: _toDateTime(json['LAST_UPDATED_DATE']),
@@ -129,6 +136,7 @@ class Individual {
       documents: _parseList(json['DOCUMENTS'], IndividualDocument.fromJson),
       placesOfBirth: _parseList(json['POBS'], IndividualPlaceOfBirth.fromJson),
       attributes: _parseList(json['ATTR_VALUES'], IndividualAttribute.fromJson),
+      rawData: Map<String, dynamic>.from(json),
     );
   }
 }

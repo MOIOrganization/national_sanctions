@@ -49,6 +49,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
       final Map<String, dynamic> response = await _service.getAllEntities(
         offset: 0,
         limit: 50,
+        //limit:1000
         language: 'ARAB',
       );
 

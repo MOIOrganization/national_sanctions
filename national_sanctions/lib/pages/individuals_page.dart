@@ -55,6 +55,7 @@ class _IndividualsPageState extends State<IndividualsPage> {
 
       final IndividualResponse response = await _service.getAllIndividuals(
         offset: 0,
+        // limit: 1000,
         limit: 50,
         language: 'ARAB',
       );
@@ -127,7 +128,8 @@ class _IndividualsPageState extends State<IndividualsPage> {
             .join(' ')
             .toLowerCase();
 
-        return individual.fullName.toLowerCase().contains(query) ||
+        return individual.dataId.toString().contains(query) ||
+            individual.fullName.toLowerCase().contains(query) ||
             individual.referenceNumber.toLowerCase().contains(query) ||
             individual.unListType.toLowerCase().contains(query) ||
             individual.nationality.toLowerCase().contains(query) ||
@@ -170,7 +172,7 @@ class _IndividualsPageState extends State<IndividualsPage> {
               _search(value);
             },
             decoration: InputDecoration(
-              hintText: 'Search name or reference number',
+              hintText: 'Search by ID, name or reference number',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -361,11 +363,13 @@ class _IndividualsPageState extends State<IndividualsPage> {
                   '👆 [SANCTIONS PAGE] '
                   'Name: ${individual.fullName}',
                 );
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PersonDetailsPage(individual: individual),
+                    builder: (_) => PersonDetailsPage(
+                      dataId: individual.dataId,
+                      initialIndividual: individual,
+                    ),
                   ),
                 );
               },
