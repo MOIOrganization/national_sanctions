@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
 class HomePage extends StatelessWidget {
-  final VoidCallback onOpenSanctions;
+  final VoidCallback onOpenIndividuals;
+  final VoidCallback onOpenEntities;
 
-  const HomePage({super.key, required this.onOpenSanctions});
+  const HomePage({
+    super.key,
+    required this.onOpenIndividuals,
+    required this.onOpenEntities,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +38,7 @@ class HomePage extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Search individuals and entities included in official sanctions lists.',
+                'Search individuals and entities included in official United Nations sanctions lists.',
                 style: TextStyle(color: Colors.white70, height: 1.5),
               ),
             ],
@@ -49,49 +54,29 @@ class HomePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Card(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: onOpenSanctions,
-            child: const Padding(
-              padding: EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Color(0xFFE8EEF5),
-                    child: Icon(Icons.person_search, color: AppColors.primary),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Search Sanctions List',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Search by name, nationality or reference number.',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.arrow_forward_ios, size: 17),
-                ],
-              ),
-            ),
-          ),
+
+        // Individuals
+        _QuickAccessCard(
+          icon: Icons.person_search_outlined,
+          title: 'Search Individuals',
+          description:
+              'Search listed individuals by name, nationality or reference number.',
+          onTap: onOpenIndividuals,
         ),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 12),
+
+        // Entities
+        _QuickAccessCard(
+          icon: Icons.business_outlined,
+          title: 'Search Entities',
+          description:
+              'Search listed companies, organisations and other entities.',
+          onTap: onOpenEntities,
+        ),
+
+        const SizedBox(height: 18),
+
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -114,6 +99,66 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _QuickAccessCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  const _QuickAccessCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: const Color(0xFFE8EEF5),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 17),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

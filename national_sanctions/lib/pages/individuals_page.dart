@@ -6,14 +6,14 @@ import '../services/sanctions_service.dart';
 import '../theme/app_colors.dart';
 import 'person_details_page.dart';
 
-class SanctionsPage extends StatefulWidget {
-  const SanctionsPage({super.key});
+class IndividualsPage extends StatefulWidget {
+  const IndividualsPage({super.key});
 
   @override
-  State<SanctionsPage> createState() => _SanctionsPageState();
+  State<IndividualsPage> createState() => _IndividualsPageState();
 }
 
-class _SanctionsPageState extends State<SanctionsPage> {
+class _IndividualsPageState extends State<IndividualsPage> {
   final SanctionsService _service = SanctionsService();
 
   final TextEditingController _searchController = TextEditingController();

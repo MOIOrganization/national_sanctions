@@ -22,9 +22,14 @@ class AppNavbar extends StatelessWidget {
           label: 'Home',
         ),
         NavigationDestination(
-          icon: Icon(Icons.manage_search_outlined),
-          selectedIcon: Icon(Icons.manage_search),
-          label: 'Sanctions',
+          icon: Icon(Icons.people_outline),
+          selectedIcon: Icon(Icons.people),
+          label: 'Individuals',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.business_outlined),
+          selectedIcon: Icon(Icons.business),
+          label: 'Entities',
         ),
         NavigationDestination(
           icon: Icon(Icons.info_outline),
