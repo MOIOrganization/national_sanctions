@@ -26,6 +26,14 @@ class _IndividualsPageState extends State<IndividualsPage> {
 
   int _totalRecords = 0;
 
+  final ScrollController _scrollController = ScrollController();
+
+  static const int _pageSize = 50;
+
+  int _currentOffset = 0;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
@@ -35,70 +43,103 @@ class _IndividualsPageState extends State<IndividualsPage> {
     debugPrint('📄 [SANCTIONS PAGE] initState called');
     debugPrint('📄 [SANCTIONS PAGE] Starting API loading');
     debugPrint('========================================');
+    _scrollController.addListener(_onScroll);
 
-    _loadIndividuals();
+    _loadIndividuals(refresh: true);
   }
 
-  Future<void> _loadIndividuals() async {
-    debugPrint('');
-    debugPrint('🔄 [SANCTIONS PAGE] _loadIndividuals started');
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
 
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+    final position = _scrollController.position;
+
+    if (position.pixels >= position.maxScrollExtent - 250) {
+      _loadMoreIndividuals();
+    }
+  }
+
+  Future<void> _loadIndividuals({bool refresh = false}) async {
+    if (refresh) {
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _isLoadingMore = false;
+          _errorMessage = null;
+          _currentOffset = 0;
+          _hasMore = true;
+        });
+      }
     }
 
     try {
-      debugPrint('🔄 [SANCTIONS PAGE] Calling getAllIndividuals...');
+      debugPrint(
+        '🔄 [INDIVIDUALS] Loading offset=$_currentOffset limit=$_pageSize',
+      );
 
       final IndividualResponse response = await _service.getAllIndividuals(
-        offset: 0,
-        // limit: 1000,
-        limit: 50,
+        offset: _currentOffset,
+        limit: _pageSize,
         language: 'ARAB',
       );
 
-      debugPrint('✅ [SANCTIONS PAGE] API call completed');
-
-      debugPrint(
-        '✅ [SANCTIONS PAGE] '
-        'Total on server: ${response.totalRecords}',
-      );
-
-      debugPrint(
-        '✅ [SANCTIONS PAGE] '
-        'Received now: ${response.individuals.length}',
-      );
-
-      if (!mounted) {
-        debugPrint('⚠️ [SANCTIONS PAGE] Widget is no longer mounted');
-
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
-        _allIndividuals = response.individuals;
-        _filteredIndividuals = response.individuals;
+        if (refresh) {
+          _allIndividuals = response.individuals;
+        } else {
+          _allIndividuals.addAll(response.individuals);
+        }
+
+        _filteredIndividuals = List<Individual>.from(_allIndividuals);
+
         _totalRecords = response.totalRecords;
+
+        _currentOffset = _allIndividuals.length;
+
+        _hasMore =
+            response.individuals.isNotEmpty &&
+            _allIndividuals.length < response.totalRecords;
+
         _isLoading = false;
+        _isLoadingMore = false;
       });
 
-      debugPrint('✅ [SANCTIONS PAGE] State updated successfully');
+      if (_searchController.text.trim().isNotEmpty) {
+        _search(_searchController.text);
+      }
+
+      debugPrint('✅ [INDIVIDUALS] Loaded ${response.individuals.length}');
+
+      debugPrint('✅ [INDIVIDUALS] Current total: ${_allIndividuals.length}');
+
+      debugPrint('✅ [INDIVIDUALS] Has more: $_hasMore');
     } catch (error, stackTrace) {
-      debugPrint('');
-      debugPrint('❌ [SANCTIONS PAGE] Loading failed');
-      debugPrint('❌ [SANCTIONS PAGE] Error: $error');
-      debugPrint('❌ [SANCTIONS PAGE] Stack trace: $stackTrace');
+      debugPrint('❌ [INDIVIDUALS] Error: $error');
+      debugPrintStack(stackTrace: stackTrace);
 
       if (!mounted) return;
 
       setState(() {
         _errorMessage = error.toString();
         _isLoading = false;
+        _isLoadingMore = false;
       });
     }
+  }
+
+  Future<void> _loadMoreIndividuals() async {
+    if (_isLoading || _isLoadingMore || !_hasMore || _errorMessage != null) {
+      return;
+    }
+
+    debugPrint('⬇️ [INDIVIDUALS] Loading more from offset $_currentOffset');
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    await _loadIndividuals();
   }
 
   void _search(String value) {
@@ -148,6 +189,8 @@ class _IndividualsPageState extends State<IndividualsPage> {
   void dispose() {
     debugPrint('📄 [SANCTIONS PAGE] dispose called');
 
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
 
     super.dispose();
@@ -297,23 +340,24 @@ class _IndividualsPageState extends State<IndividualsPage> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadIndividuals,
+      onRefresh: () => _loadIndividuals(refresh: true),
       child: ListView.separated(
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: _filteredIndividuals.length,
+        itemCount: _filteredIndividuals.length + (_isLoadingMore ? 1 : 0),
         separatorBuilder: (_, __) {
           return const SizedBox(height: 10);
         },
         itemBuilder: (context, index) {
-          final Individual individual = _filteredIndividuals[index];
-
-          if (index < 3) {
-            debugPrint(
-              '🪪 [SANCTIONS PAGE] Building card '
-              '$index: ${individual.fullName}',
+          if (index == _filteredIndividuals.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(child: CircularProgressIndicator()),
             );
           }
+
+          final Individual individual = _filteredIndividuals[index];
 
           return Card(
             child: ListTile(
@@ -337,32 +381,14 @@ class _IndividualsPageState extends State<IndividualsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (individual.referenceNumber.isNotEmpty)
-                      Text(
-                        'Reference: '
-                        '${individual.referenceNumber}',
-                      ),
+                      Text('Reference: ${individual.referenceNumber}'),
                     if (individual.unListType.isNotEmpty)
                       Text('List: ${individual.unListType}'),
-                    if (individual.nationality.isNotEmpty)
-                      Text(
-                        'Nationality: '
-                        '${individual.nationality}',
-                      ),
                   ],
                 ),
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () async {
-                debugPrint('');
-                debugPrint('👆 [SANCTIONS PAGE] Record pressed');
-                debugPrint(
-                  '👆 [SANCTIONS PAGE] '
-                  'Data ID: ${individual.dataId}',
-                );
-                debugPrint(
-                  '👆 [SANCTIONS PAGE] '
-                  'Name: ${individual.fullName}',
-                );
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
