@@ -313,33 +313,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
         ),
 
         if (!_isLoading && _errorMessage == null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 10, 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Showing '
-                    '${_filteredEntities.length} loaded '
-                    'of $_totalRecords entities',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Refresh',
-                  onPressed: () {
-                    _loadEntities(refresh: true);
-                  },
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-          ),
-
-        Expanded(child: _buildContent()),
+          Expanded(child: _buildContent()),
       ],
     );
   }

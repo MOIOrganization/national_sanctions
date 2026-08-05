@@ -235,29 +235,7 @@ class _IndividualsPageState extends State<IndividualsPage> {
           ),
         ),
         if (!_isLoading && _errorMessage == null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Showing ${_filteredIndividuals.length} '
-                    'of $_totalRecords records',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Refresh',
-                  onPressed: _loadIndividuals,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
-            ),
-          ),
-        Expanded(child: _buildContent()),
+          Expanded(child: _buildContent()),
       ],
     );
   }
