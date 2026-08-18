@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 import 'widgets/header.dart';
 import 'widgets/navbar.dart';
 import 'pages/entities_page.dart';
+import 'pages/login_page.dart';
 
 void main() {
   runApp(const NationalSanctionsApp());
@@ -20,7 +21,7 @@ class NationalSanctionsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'National Sanctions',
       theme: AppTheme.lightTheme,
-      home: const MainScreen(),
+      home: const LoginPage(),
     );
   }
 }
@@ -39,6 +40,14 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  void _logout() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
   }
 
   String get _pageTitle {
@@ -73,7 +82,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(title: _pageTitle),
+      appBar: Header(title: _pageTitle, showLogout: true, onLogout: _logout),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,

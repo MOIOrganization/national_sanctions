@@ -3,8 +3,16 @@ import 'package:flutter/material.dart';
 class Header extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
+  final bool showLogout;
+  final VoidCallback? onLogout;
 
-  const Header({super.key, required this.title, this.showBackButton = false});
+  const Header({
+    super.key,
+    required this.title,
+    this.showBackButton = false,
+    this.showLogout = false,
+    this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +23,14 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
       ),
       centerTitle: true,
+      actions: [
+        if (showLogout)
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: onLogout,
+            icon: const Icon(Icons.logout),
+          ),
+      ],
     );
   }
 
