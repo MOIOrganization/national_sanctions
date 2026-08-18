@@ -248,7 +248,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // ====================================================
@@ -287,11 +286,10 @@ class _LoginPageState extends State<LoginPage> {
                       // LOGO
                       // ========================================
                       Container(
-                        width: 115,
-                        height: 115,
+                        width: 140,
+                        height: 140,
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -307,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 10),
 
                       // ========================================
                       // APP NAME
