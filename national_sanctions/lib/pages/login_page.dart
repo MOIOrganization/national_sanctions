@@ -14,9 +14,8 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _cprController = TextEditingController();
-
   final TextEditingController _expiryController = TextEditingController();
-
+  final TextEditingController _blockController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
   // ============================================================
@@ -236,6 +235,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _cprController.dispose();
     _expiryController.dispose();
+    _blockController.dispose();
     _phoneController.dispose();
 
     super.dispose();
@@ -279,7 +279,7 @@ class _LoginPageState extends State<LoginPage> {
                   vertical: 24,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     children: [
                       // ========================================
@@ -311,7 +311,7 @@ class _LoginPageState extends State<LoginPage> {
                       // APP NAME
                       // ========================================
                       const Text(
-                        'National Sanctions',
+                        'Sanctions',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -338,7 +338,7 @@ class _LoginPageState extends State<LoginPage> {
                       // LOGIN CARD
                       // ========================================
                       Container(
-                        padding: const EdgeInsets.all(22),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.96),
                           borderRadius: BorderRadius.circular(20),
@@ -374,7 +374,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
 
-                              const SizedBox(height: 22),
+                              const SizedBox(height: 18),
 
                               // =================================
                               // CPR
@@ -442,6 +442,35 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 16),
 
                               // =================================
+                              // BLOCK NUMBER
+                              // =================================
+                              TextFormField(
+                                controller: _blockController,
+                                keyboardType: TextInputType.number,
+                                textInputAction: TextInputAction.next,
+                                maxLength: 4,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                decoration: const InputDecoration(
+                                  labelText: 'Block Number',
+                                  hintText: 'Enter block number',
+                                  prefixIcon: Icon(Icons.location_on_outlined),
+                                  counterText: '',
+                                ),
+                                validator: (value) {
+                                  final String text = value?.trim() ?? '';
+
+                                  if (text.isEmpty) {
+                                    return 'Please enter your block number';
+                                  }
+
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+                              // =================================
                               // MOBILE
                               // =================================
                               TextFormField(
@@ -491,7 +520,7 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
 
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
 
                               // =================================
                               // CONTINUE

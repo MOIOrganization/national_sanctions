@@ -19,7 +19,7 @@ class NationalSanctionsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'National Sanctions',
+      title: 'Sanctions',
       theme: AppTheme.lightTheme,
       home: const LoginPage(),
     );
@@ -59,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
       case 3:
         return 'About';
       default:
-        return 'National Sanctions';
+        return 'Sanctions';
     }
   }
 

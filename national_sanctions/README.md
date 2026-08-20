@@ -1,4 +1,4 @@
-# national_sanctions
+# sanctions
 
 A new Flutter project.
 

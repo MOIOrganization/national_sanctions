@@ -1,4 +1,4 @@
-package com.example.national_sanctions
+package com.example.sanctions
 
 import io.flutter.embedding.android.FlutterActivity
 

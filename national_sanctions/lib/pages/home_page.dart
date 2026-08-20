@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
               Icon(Icons.policy_outlined, color: Colors.white, size: 42),
               SizedBox(height: 18),
               Text(
-                'National Sanctions',
+                'Sanctions',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 25,
