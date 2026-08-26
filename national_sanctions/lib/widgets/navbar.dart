@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-
 import '../theme/app_colors.dart';
 
 class AppNavbar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const AppNavbar({super.key, required this.currentIndex, required this.onTap});
+  const AppNavbar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,14 +25,14 @@ class AppNavbar extends StatelessWidget {
           label: 'Home',
         ),
         NavigationDestination(
-          icon: Icon(Icons.people_outline),
-          selectedIcon: Icon(Icons.people),
-          label: 'Individuals',
+          icon: Icon(Icons.public_outlined),
+          selectedIcon: Icon(Icons.public),
+          label: 'United Nations',
         ),
         NavigationDestination(
-          icon: Icon(Icons.business_outlined),
-          selectedIcon: Icon(Icons.business),
-          label: 'Entities',
+          icon: Icon(Icons.account_balance_outlined),
+          selectedIcon: Icon(Icons.account_balance),
+          label: 'National',
         ),
       ],
     );

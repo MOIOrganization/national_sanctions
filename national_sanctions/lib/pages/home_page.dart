@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
 class HomePage extends StatelessWidget {
-  final VoidCallback onOpenIndividuals;
-  final VoidCallback onOpenEntities;
+  final VoidCallback onOpenUnitedNations;
+  final VoidCallback onOpenNationalSanctions;
 
   const HomePage({
     super.key,
-    required this.onOpenIndividuals,
-    required this.onOpenEntities,
+    required this.onOpenUnitedNations,
+    required this.onOpenNationalSanctions,
   });
 
   @override
@@ -17,6 +17,9 @@ class HomePage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(18),
       children: [
+        // =========================================================
+        // HEADER
+        // =========================================================
         Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
@@ -26,7 +29,11 @@ class HomePage extends StatelessWidget {
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.policy_outlined, color: Colors.white, size: 42),
+              Icon(
+                Icons.policy_outlined,
+                color: Colors.white,
+                size: 42,
+              ),
               SizedBox(height: 18),
               Text(
                 'Sanctions',
@@ -38,61 +45,84 @@ class HomePage extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Search individuals and entities included in official United Nations sanctions lists.',
-                style: TextStyle(color: Colors.white70, height: 1.5),
+                'Search and review sanctions information.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: 24),
+
+        // =========================================================
+        // TITLE
+        // =========================================================
         const Text(
-          'Quick Access',
+          'Select Sanctions List',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 19,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
 
-        // Individuals
-        _QuickAccessCard(
-          icon: Icons.person_search_outlined,
-          title: 'Search Individuals',
+        const SizedBox(height: 14),
+
+        // =========================================================
+        // UNITED NATIONS
+        // =========================================================
+        _SanctionsOptionCard(
+          icon: Icons.public,
+          title: 'United Nations Sanctions',
           description:
-              'Search listed individuals by name, nationality or reference number.',
-          onTap: onOpenIndividuals,
+              'Search individuals and entities included in the official United Nations sanctions lists.',
+          onTap: onOpenUnitedNations,
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
-        // Entities
-        _QuickAccessCard(
-          icon: Icons.business_outlined,
-          title: 'Search Entities',
+        // =========================================================
+        // NATIONAL SANCTIONS
+        // =========================================================
+        _SanctionsOptionCard(
+          icon: Icons.account_balance_outlined,
+          title: 'National Sanctions',
           description:
-              'Search listed companies, organisations and other entities.',
-          onTap: onOpenEntities,
+              'View individuals and entities included in national sanctions lists.',
+          onTap: onOpenNationalSanctions,
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
 
+        // =========================================================
+        // INFORMATION
+        // =========================================================
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFFFFF8E8),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE9D8A6)),
+            border: Border.all(
+              color: const Color(0xFFE9D8A6),
+            ),
           ),
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, color: AppColors.secondary),
+              Icon(
+                Icons.info_outline,
+                color: AppColors.secondary,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Information should always be verified against the official source before making a legal or compliance decision.',
-                  style: TextStyle(height: 1.5),
+                  style: TextStyle(
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -103,13 +133,17 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _QuickAccessCard extends StatelessWidget {
+// ===============================================================
+// SANCTIONS OPTION CARD
+// ===============================================================
+
+class _SanctionsOptionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
   final VoidCallback onTap;
 
-  const _QuickAccessCard({
+  const _SanctionsOptionCard({
     required this.icon,
     required this.title,
     required this.description,
@@ -123,15 +157,27 @@ class _QuickAccessCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: const Color(0xFFE8EEF5),
-                child: Icon(icon, color: AppColors.primary),
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(
+                    alpha: 0.10,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  size: 30,
+                  color: AppColors.primary,
+                ),
               ),
+
               const SizedBox(width: 16),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,11 +185,11 @@ class _QuickAccessCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
                     Text(
                       description,
                       style: const TextStyle(
@@ -154,7 +200,14 @@ class _QuickAccessCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 17),
+
+              const SizedBox(width: 8),
+
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 17,
+                color: AppColors.textSecondary,
+              ),
             ],
           ),
         ),

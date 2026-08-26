@@ -1,12 +1,15 @@
+
 import 'package:flutter/material.dart';
 
+import 'pages/entities_page.dart';
 import 'pages/home_page.dart';
 import 'pages/individuals_page.dart';
+import 'pages/login_page.dart';
+import 'pages/national_sanctions_page.dart';
+import 'pages/un_sanctions_page.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
 import 'widgets/navbar.dart';
-import 'pages/entities_page.dart';
-import 'pages/login_page.dart';
 
 void main() {
   runApp(const NationalSanctionsApp());
@@ -45,19 +48,39 @@ class _MainScreenState extends State<MainScreen> {
   void _logout() {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(),
+      ),
       (route) => false,
+    );
+  }
+
+  void _openIndividuals() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const _IndividualsScreen(),
+      ),
+    );
+  }
+
+  void _openEntities() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const _EntitiesScreen(),
+      ),
     );
   }
 
   String get _pageTitle {
     switch (_currentIndex) {
       case 1:
-        return 'Individuals';
+        return 'United Nations Sanctions';
+
       case 2:
-        return 'Entities';
-      case 3:
-        return 'About';
+        return 'National Sanctions';
+
       default:
         return 'Sanctions';
     }
@@ -66,28 +89,77 @@ class _MainScreenState extends State<MainScreen> {
   List<Widget> get _pages {
     return [
       HomePage(
-        onOpenIndividuals: () {
+        onOpenUnitedNations: () {
           _changePage(1);
         },
-        onOpenEntities: () {
+        onOpenNationalSanctions: () {
           _changePage(2);
         },
       ),
-      const IndividualsPage(),
-      const EntitiesPage(),
-      // const AboutPage(),
+
+      UnSanctionsPage(
+        onOpenIndividuals: _openIndividuals,
+        onOpenEntities: _openEntities,
+      ),
+
+      const NationalSanctionsPage(),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(title: _pageTitle, showLogout: true, onLogout: _logout),
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      appBar: Header(
+        title: _pageTitle,
+        showLogout: true,
+        onLogout: _logout,
+      ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
         onTap: _changePage,
       ),
+    );
+  }
+}
+
+// =============================================================
+// INDIVIDUALS FULL SCREEN
+// =============================================================
+
+class _IndividualsScreen extends StatelessWidget {
+  const _IndividualsScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const Header(
+        title: 'Individuals',
+        showBackButton: true,
+      ),
+      body: const IndividualsPage(),
+    );
+  }
+}
+
+// =============================================================
+// ENTITIES FULL SCREEN
+// =============================================================
+
+class _EntitiesScreen extends StatelessWidget {
+  const _EntitiesScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const Header(
+        title: 'Entities',
+        showBackButton: true,
+      ),
+      body: const EntitiesPage(),
     );
   }
 }
