@@ -119,7 +119,99 @@ class SanctionsService {
   }
 
   // ============================================================
-  // 2. GET ALL INDIVIDUALS
+  // 2. LOGIN
+  // ============================================================
+
+  Future<Map<String, dynamic>> login({
+    required String cpr,
+    required String blockNo,
+    required String expireDate,
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'mob_un_login',
+      requestName: 'LOGIN',
+      body: {
+        'cpr': cpr,
+        'block_no': blockNo,
+        'expire_date': expireDate,
+      },
+    );
+
+    if (_isLoginFailure(responseJson)) {
+      throw SanctionsApiException(
+        message: _loginErrorMessage(responseJson),
+        responseBody: jsonEncode(responseJson),
+      );
+    }
+
+    debugPrint('✅ [LOGIN] Login completed successfully');
+
+    return responseJson;
+  }
+
+  bool _isLoginFailure(Map<String, dynamic> responseJson) {
+    final String status = _firstNonEmptyString([
+      responseJson['STATUS'],
+      responseJson['status'],
+      responseJson['RESULT'],
+      responseJson['result'],
+    ]).toUpperCase();
+
+    if (status.isNotEmpty &&
+        (status == '0' ||
+            status == 'ERROR' ||
+            status == 'FAILED' ||
+            status == 'FAIL' ||
+            status == 'FALSE')) {
+      return true;
+    }
+
+    final String message = _firstNonEmptyString([
+      responseJson['MESSAGE'],
+      responseJson['message'],
+      responseJson['ERROR'],
+      responseJson['error'],
+    ]).toLowerCase();
+
+    if (message.contains('invalid') ||
+        message.contains('failed') ||
+        message.contains('not found') ||
+        message.contains('incorrect')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  String _loginErrorMessage(Map<String, dynamic> responseJson) {
+    final String message = _firstNonEmptyString([
+      responseJson['MESSAGE'],
+      responseJson['message'],
+      responseJson['ERROR'],
+      responseJson['error'],
+    ]);
+
+    if (message.isNotEmpty) {
+      return message;
+    }
+
+    return 'Login details could not be verified.';
+  }
+
+  String _firstNonEmptyString(List<dynamic> values) {
+    for (final dynamic value in values) {
+      final String text = value?.toString().trim() ?? '';
+
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return '';
+  }
+
+  // ============================================================
+  // 3. GET ALL INDIVIDUALS
   // ============================================================
 
   Future<IndividualResponse> getAllIndividuals({

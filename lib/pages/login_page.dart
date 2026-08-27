@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../main.dart';
+import '../services/sanctions_service.dart';
 import '../theme/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,11 +13,14 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final SanctionsService _service = SanctionsService();
 
   final TextEditingController _cprController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _blockController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  bool _isLoggingIn = false;
 
   // ============================================================
   // SELECT CPR EXPIRY DATE
@@ -49,14 +53,52 @@ class _LoginPageState extends State<LoginPage> {
   // CONTINUE TO OTP
   // ============================================================
 
-  void _continue() {
+  Future<void> _continue() async {
+    if (_isLoggingIn) {
+      return;
+    }
+
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    _showOtpDialog();
+    setState(() {
+      _isLoggingIn = true;
+    });
+
+    try {
+      await _service.login(
+        cpr: _cprController.text.trim(),
+        blockNo: _blockController.text.trim(),
+        expireDate: _expiryController.text.trim().replaceAll('/', ''),
+      );
+
+      if (!mounted) return;
+
+      await _showOtpDialog();
+    } on SanctionsApiException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to login. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingIn = false;
+        });
+      }
+    }
   }
 
   Future<void> _showOtpDialog() async {
@@ -529,21 +571,34 @@ class _LoginPageState extends State<LoginPage> {
                                 width: double.infinity,
                                 height: 52,
                                 child: FilledButton(
-                                  onPressed: _continue,
-                                  child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                  onPressed: _isLoggingIn ? null : _continue,
+                                  child: _isLoggingIn
+                                      ? const SizedBox(
+                                          height: 22,
+                                          width: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Continue',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Icon(
+                                              Icons.arrow_forward,
+                                              size: 19,
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.arrow_forward, size: 19),
-                                    ],
-                                  ),
                                 ),
                               ),
                             ],
