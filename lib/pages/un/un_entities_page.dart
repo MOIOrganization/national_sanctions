@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../services/sanctions_service.dart';
-import '../theme/app_colors.dart';
-import 'entity_details_page.dart';
+import '../../services/sanctions_service.dart';
+import '../../theme/app_colors.dart';
+import 'un_entity_details_page.dart';
 
 class EntitiesPage extends StatefulWidget {
   const EntitiesPage({super.key});

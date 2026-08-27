@@ -271,6 +271,103 @@ class SanctionsService {
   }
 
   // ============================================================
+  // 6. GET NATIONAL LIST PERSONS
+  // ============================================================
+
+  Future<Map<String, dynamic>> getNationalPersons({
+    int offset = 0,
+    int limit = 50,
+    String language = 'ARAB',
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'bl_get_nl_persons',
+      requestName: 'GET NATIONAL PERSONS',
+      body: {
+        'offset': offset.toString(),
+        'limit': limit.toString(),
+        'lang': language,
+      },
+    );
+
+    final dynamic data = responseJson['DATA'];
+
+    final int recordCount = data is List ? data.length : 0;
+
+    debugPrint(
+      '✅ [GET NATIONAL PERSONS] Total records: '
+      '${responseJson['total_records']}',
+    );
+
+    debugPrint(
+      '✅ [GET NATIONAL PERSONS] Returned records: '
+      '$recordCount',
+    );
+
+    if (data is List) {
+      for (final item in data.take(5)) {
+        if (item is Map) {
+          debugPrint(
+            '👤 [NATIONAL PERSON] '
+            'ID=${item['ID']} '
+            '| Name=${item['PERSON_NAME_IN_ARABIC'] ?? item['PERSON_NAME_IN_ENGLISH'] ?? ''}',
+          );
+        }
+      }
+    }
+
+    return responseJson;
+  }
+
+  // ============================================================
+  // 7. GET NATIONAL LIST ENTITIES
+  // ============================================================
+
+  Future<Map<String, dynamic>> getNationalEntities({
+    int offset = 0,
+    int limit = 50,
+    String language = 'ARAB',
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'bl_get_nl_entities',
+      requestName: 'GET NATIONAL ENTITIES',
+      body: {
+        'offset': offset.toString(),
+        'limit': limit.toString(),
+        'lang': language,
+      },
+    );
+
+    final dynamic data = responseJson['DATA'];
+
+    final int recordCount = data is List ? data.length : 0;
+
+    debugPrint(
+      '✅ [GET NATIONAL ENTITIES] Total records: '
+      '${responseJson['total_records']}',
+    );
+
+    debugPrint(
+      '✅ [GET NATIONAL ENTITIES] Returned records: '
+      '$recordCount',
+    );
+
+    if (data is List) {
+      for (final item in data.take(5)) {
+        if (item is Map) {
+          debugPrint(
+            '🏢 [NATIONAL ENTITY] '
+            'ID=${item['ID']} '
+            '| Arabic=${item['ENTITY_NAME_IN_ARABIC'] ?? ''} '
+            '| English=${item['ENTITY_NAME_IN_ENGLISH'] ?? ''}',
+          );
+        }
+      }
+    }
+
+    return responseJson;
+  }
+
+  // ============================================================
   // COMMON POST REQUEST
   // ============================================================
 

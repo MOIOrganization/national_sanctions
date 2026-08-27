@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models.dart';
-import '../services/sanctions_service.dart';
-import '../theme/app_colors.dart';
-import '../widgets/header.dart';
+import '../../models.dart';
+import '../../services/sanctions_service.dart';
+import '../../theme/app_colors.dart';
+import '../../widgets/header.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final int dataId;

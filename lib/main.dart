@@ -1,12 +1,12 @@
-
 import 'package:flutter/material.dart';
 
-import 'pages/entities_page.dart';
+import 'pages/un/un_entities_page.dart';
 import 'pages/home_page.dart';
-import 'pages/individuals_page.dart';
+import 'pages/un/un_individuals_page.dart';
 import 'pages/login_page.dart';
-import 'pages/national_sanctions_page.dart';
-import 'pages/un_sanctions_page.dart';
+import 'pages/national/national_persons_page.dart';
+import 'pages/national/national_sanctions_page.dart';
+import 'pages/un/un_sanctions_page.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
 import 'widgets/navbar.dart';
@@ -48,9 +48,7 @@ class _MainScreenState extends State<MainScreen> {
   void _logout() {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
   }
@@ -58,18 +56,14 @@ class _MainScreenState extends State<MainScreen> {
   void _openIndividuals() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const _IndividualsScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const _IndividualsScreen()),
     );
   }
 
   void _openEntities() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const _EntitiesScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const _EntitiesScreen()),
     );
   }
 
@@ -109,15 +103,8 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: Header(
-        title: _pageTitle,
-        showLogout: true,
-        onLogout: _logout,
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      appBar: Header(title: _pageTitle, showLogout: true, onLogout: _logout),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
         onTap: _changePage,
@@ -136,10 +123,7 @@ class _IndividualsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(
-        title: 'Individuals',
-        showBackButton: true,
-      ),
+      appBar: const Header(title: 'Individuals', showBackButton: true),
       body: const IndividualsPage(),
     );
   }
@@ -155,10 +139,7 @@ class _EntitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(
-        title: 'Entities',
-        showBackButton: true,
-      ),
+      appBar: const Header(title: 'Entities', showBackButton: true),
       body: const EntitiesPage(),
     );
   }

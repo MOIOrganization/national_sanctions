@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../services/sanctions_service.dart';
-import '../theme/app_colors.dart';
-import '../widgets/header.dart';
+import '../../services/sanctions_service.dart';
+import '../../theme/app_colors.dart';
+import '../../widgets/header.dart';
 
 class EntityDetailsPage extends StatefulWidget {
   final int dataId;

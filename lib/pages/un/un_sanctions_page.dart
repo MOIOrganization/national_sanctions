@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../../theme/app_colors.dart';
 
 class UnSanctionsPage extends StatelessWidget {
   final VoidCallback onOpenIndividuals;
@@ -26,11 +26,7 @@ class UnSanctionsPage extends StatelessWidget {
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.public,
-                color: Colors.white,
-                size: 42,
-              ),
+              Icon(Icons.public, color: Colors.white, size: 42),
               SizedBox(height: 18),
               Text(
                 'United Nations Sanctions',
@@ -43,10 +39,7 @@ class UnSanctionsPage extends StatelessWidget {
               SizedBox(height: 8),
               Text(
                 'Search individuals and entities included in official United Nations sanctions lists.',
-                style: TextStyle(
-                  color: Colors.white70,
-                  height: 1.5,
-                ),
+                style: TextStyle(color: Colors.white70, height: 1.5),
               ),
             ],
           ),
@@ -113,10 +106,7 @@ class _SanctionsCard extends StatelessWidget {
               CircleAvatar(
                 radius: 25,
                 backgroundColor: const Color(0xFFE8EEF5),
-                child: Icon(
-                  icon,
-                  color: AppColors.primary,
-                ),
+                child: Icon(icon, color: AppColors.primary),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -141,10 +131,7 @@ class _SanctionsCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 17,
-              ),
+              const Icon(Icons.arrow_forward_ios, size: 17),
             ],
           ),
         ),

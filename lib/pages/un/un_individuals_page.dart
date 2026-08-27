@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../models.dart';
-import '../services/sanctions_service.dart';
-import '../theme/app_colors.dart';
-import 'person_details_page.dart';
+import '../../models.dart';
+import '../../services/sanctions_service.dart';
+import '../../theme/app_colors.dart';
+import 'un_person_details_page.dart';
 
 class IndividualsPage extends StatefulWidget {
   const IndividualsPage({super.key});
