@@ -130,20 +130,6 @@ class NationalEntityDetailsPage extends StatelessWidget {
               _Row(label: 'Updated', value: _date(entity['UPDATED'])),
             ],
           ),
-
-          _Section(
-            title: 'System Information',
-            icon: Icons.settings_outlined,
-            children: [
-              _Row(label: 'Created By', value: _text(entity['CREATED_BY'])),
-              _Row(label: 'Updated By', value: _text(entity['UPDATED_BY'])),
-              _Row(
-                label: 'Need Feedback',
-                value: _text(entity['NEED_FEEDBACK']),
-              ),
-              _Row(label: 'Request Entity', value: _text(entity['REQ_ENTITY'])),
-            ],
-          ),
         ],
       ),
     );
