@@ -41,7 +41,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         DestinationCard(
           icon: Icons.account_balance_outlined,
-          title: l10n.national,
+          title: l10n.nationalList,
           description: l10n.nationalDescription,
           onTap: onOpenNationalSanctions,
         ),

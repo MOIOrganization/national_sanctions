@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
-import '../models/app_notification.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'account_drawer.dart';
@@ -12,17 +11,11 @@ import 'notification_button.dart';
 class Header extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
-  final int unreadCount;
-  final List<AppNotification> notifications;
-  final ValueChanged<AppNotification>? onNotificationTap;
 
   const Header({
     super.key,
     required this.title,
     this.showBackButton = false,
-    this.unreadCount = 0,
-    this.notifications = const [],
-    this.onNotificationTap,
   });
 
   @override
@@ -40,11 +33,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () => Navigator.maybePop(context),
               icon: const DirectionalBackIcon(),
             ),
-          NotificationButton(
-            unreadCount: unreadCount,
-            notifications: notifications,
-            onNotificationTap: onNotificationTap,
-          ),
+          const NotificationButton(),
         ],
       ),
       title: Text(

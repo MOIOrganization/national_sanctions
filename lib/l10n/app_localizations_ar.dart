@@ -114,6 +114,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get national => 'وطني';
 
   @override
+  String get nationalList => 'القائمة الوطنية';
+
+  @override
   String get officialLookup => 'البحث الرسمي في العقوبات';
 
   @override
@@ -128,7 +131,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get unDescription =>
-      'ابحث عن الأفراد والكيانات المدرجين في قوائم الأمم المتحدة الرسمية.';
+      'ابحث عن الأشخاص والكيانات المدرجين في قوائم الأمم المتحدة الرسمية.';
 
   @override
   String get nationalDescription =>
@@ -141,7 +144,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nationalSanctions => 'العقوبات الوطنية';
 
   @override
-  String get individuals => 'الأفراد';
+  String get individuals => 'الأشخاص';
 
   @override
   String get entities => 'الكيانات';
@@ -151,7 +154,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get unIndividualsDescription =>
-      'ابحث عن الأفراد بالرقم أو الاسم أو الجنسية أو الرقم المرجعي.';
+      'ابحث عن الأشخاص بالرقم أو الاسم أو الجنسية أو الرقم المرجعي.';
 
   @override
   String get unEntitiesDescription =>
@@ -187,7 +190,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get loadingIndividuals => 'جاري تحميل الأفراد...';
+  String get loadingIndividuals => 'جاري تحميل الأشخاص...';
 
   @override
   String get loadingEntities => 'جاري تحميل الكيانات...';
@@ -209,7 +212,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'يرجى المحاولة مرة أخرى. إذا استمرت المشكلة، حاول لاحقاً.';
 
   @override
-  String get unableToLoadIndividuals => 'تعذر تحميل الأفراد';
+  String get unableToLoadIndividuals => 'تعذر تحميل الأشخاص';
 
   @override
   String get unableToLoadEntities => 'تعذر تحميل الكيانات';
@@ -489,6 +492,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noNotificationsMessage => 'لا توجد لديك إشعارات في الوقت الحالي.';
+
+  @override
+  String get notificationDegreeHigh => 'عالي';
+
+  @override
+  String get notificationDegreeMedium => 'متوسط';
+
+  @override
+  String get notificationDegreeLow => 'منخفض';
 
   @override
   String get accountMenu => 'الحساب';

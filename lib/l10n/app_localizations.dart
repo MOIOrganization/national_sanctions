@@ -302,6 +302,12 @@ abstract class AppLocalizations {
   /// **'National'**
   String get national;
 
+  /// No description provided for @nationalList.
+  ///
+  /// In en, this message translates to:
+  /// **'National List'**
+  String get nationalList;
+
   /// No description provided for @officialLookup.
   ///
   /// In en, this message translates to:
@@ -1003,6 +1009,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You don\'t have any notifications at the moment.'**
   String get noNotificationsMessage;
+
+  /// No description provided for @notificationDegreeHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get notificationDegreeHigh;
+
+  /// No description provided for @notificationDegreeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get notificationDegreeMedium;
+
+  /// No description provided for @notificationDegreeLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get notificationDegreeLow;
 
   /// No description provided for @accountMenu.
   ///

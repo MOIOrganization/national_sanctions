@@ -114,7 +114,9 @@ class NotificationPopup extends StatelessWidget {
 
                     return _NotificationTile(
                       notification: notification,
-                      onTap: () => onNotificationTap?.call(notification),
+                      onTap: onNotificationTap == null
+                          ? null
+                          : () => onNotificationTap!(notification),
                     );
                   },
                 ),
@@ -134,6 +136,13 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String date = notification.formattedDateTime();
+    final bool showBody =
+        notification.message.isNotEmpty &&
+        notification.message != notification.title;
+    final String? degreeLabel = _degreeLabel(l10n, notification.degree);
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -144,23 +153,52 @@ class _NotificationTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!notification.isRead) ...[
-              const Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Icon(Icons.circle, size: 8, color: AppColors.secondary),
+            Container(
+              width: 3,
+              height: 42,
+              margin: const EdgeInsets.only(top: 2),
+              decoration: BoxDecoration(
+                color: _degreeColor(notification.degree),
+                borderRadius: AppRadius.border,
               ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
+            ),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(notification.title, style: AppTextStyles.subheading),
-                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    notification.message,
-                    style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                    notification.title,
+                    style: AppTextStyles.subheading.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
+                  if (showBody) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      notification.message,
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                  if (date.isNotEmpty || degreeLabel != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.md,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        if (degreeLabel != null)
+                          Text(degreeLabel, style: AppTextStyles.caption),
+                        if (date.isNotEmpty)
+                          Text(
+                            date,
+                            textDirection: TextDirection.ltr,
+                            style: AppTextStyles.caption,
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -168,5 +206,31 @@ class _NotificationTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _degreeColor(NotificationDegree degree) {
+    switch (degree) {
+      case NotificationDegree.high:
+        return AppColors.error;
+      case NotificationDegree.medium:
+        return AppColors.secondary;
+      case NotificationDegree.low:
+        return AppColors.muted;
+      case NotificationDegree.unknown:
+        return AppColors.primary;
+    }
+  }
+
+  String? _degreeLabel(AppLocalizations l10n, NotificationDegree degree) {
+    switch (degree) {
+      case NotificationDegree.high:
+        return l10n.notificationDegreeHigh;
+      case NotificationDegree.medium:
+        return l10n.notificationDegreeMedium;
+      case NotificationDegree.low:
+        return l10n.notificationDegreeLow;
+      case NotificationDegree.unknown:
+        return null;
+    }
   }
 }

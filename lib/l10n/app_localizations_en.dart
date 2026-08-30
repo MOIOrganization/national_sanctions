@@ -114,6 +114,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get national => 'National';
 
   @override
+  String get nationalList => 'National List';
+
+  @override
   String get officialLookup => 'Official sanctions lookup';
 
   @override
@@ -491,6 +494,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noNotificationsMessage =>
       'You don\'t have any notifications at the moment.';
+
+  @override
+  String get notificationDegreeHigh => 'High';
+
+  @override
+  String get notificationDegreeMedium => 'Medium';
+
+  @override
+  String get notificationDegreeLow => 'Low';
 
   @override
   String get accountMenu => 'Account';

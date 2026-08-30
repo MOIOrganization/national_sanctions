@@ -1,17 +1,38 @@
 import 'package:flutter/material.dart';
 
+import '../models/app_notification.dart';
+
 class SessionController extends ChangeNotifier {
   String? _cpr;
+  String? _userId;
   bool _biometricEnabled = false;
+  List<AppNotification> _notifications = const [];
 
   String? get cpr => _cpr;
+
+  String? get userId => _userId;
+
+  List<AppNotification> get notifications => _notifications;
+
+  int get unreadCount => _notifications.length;
 
   bool get biometricEnabled => _biometricEnabled;
 
   bool get isSignedIn => _cpr != null && _cpr!.trim().isNotEmpty;
 
-  void setSignedInCpr(String cpr) {
+  void setSignedIn({
+    required String cpr,
+    String? userId,
+    List<AppNotification> notifications = const [],
+  }) {
     _cpr = cpr.trim();
+    _userId = userId?.trim();
+    _notifications = List<AppNotification>.unmodifiable(notifications);
+    notifyListeners();
+  }
+
+  void setNotifications(List<AppNotification> notifications) {
+    _notifications = List<AppNotification>.unmodifiable(notifications);
     notifyListeners();
   }
 
@@ -37,11 +58,13 @@ class SessionController extends ChangeNotifier {
   }
 
   void signOut() {
-    if (_cpr == null) {
+    if (_cpr == null && _userId == null) {
       return;
     }
 
     _cpr = null;
+    _userId = null;
+    _notifications = const [];
     notifyListeners();
   }
 }

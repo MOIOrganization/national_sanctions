@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models.dart';
+import '../models/app_notification.dart';
 
 class SanctionsService {
   static const String _baseUrl =
@@ -464,6 +465,58 @@ class SanctionsService {
     }
 
     return responseJson;
+  }
+
+  // ============================================================
+  // 8. GET USER NOTIFICATIONS
+  // ============================================================
+
+  Future<List<AppNotification>> getUserNotifications({
+    required String userId,
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'bl_get_user_notifications',
+      requestName: 'GET USER NOTIFICATIONS',
+      body: {'user_id': userId},
+    );
+
+    print('');
+    print('==============================================');
+    print('[NOTIFICATIONS] bl_get_user_notifications response:');
+    print(const JsonEncoder.withIndent('  ').convert(responseJson));
+    print('==============================================');
+    print('');
+
+    final List<AppNotification> notifications =
+        AppNotification.listFromResponse(responseJson);
+
+    debugPrint(
+      '✅ [GET USER NOTIFICATIONS] Returned records: ${notifications.length}',
+    );
+
+    return notifications;
+  }
+
+  static String? userIdFromLogin(Map<String, dynamic> json) {
+    final dynamic data = json['DATA'];
+
+    if (data is List && data.isNotEmpty && data.first is Map) {
+      final String id = (data.first as Map)['ID']?.toString().trim() ?? '';
+
+      if (id.isNotEmpty) {
+        return id;
+      }
+    }
+
+    if (data is Map) {
+      final String id = data['ID']?.toString().trim() ?? '';
+
+      if (id.isNotEmpty) {
+        return id;
+      }
+    }
+
+    return null;
   }
 
   // ============================================================

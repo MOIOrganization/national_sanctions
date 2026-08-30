@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/app_notification.dart';
 import '../services/sanctions_service.dart';
 import '../session/session_controller.dart';
 import '../theme/app_colors.dart';
@@ -97,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      await _showOtpDialog();
+      await _completeSignIn(response);
     } on SanctionsApiException catch (error) {
       debugPrint('[LOGIN PAGE] mob_un_login error: $error');
 
@@ -143,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
     await session.authenticateForLogin();
   }
 
-  Future<void> _showOtpDialog() async {
+  Future<void> _completeSignIn(Map<String, dynamic> loginResponse) async {
     final String phone = _phoneController.text.trim();
     final String cpr = _cprController.text.trim();
 
@@ -159,7 +160,33 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    SessionScope.read(context).setSignedInCpr(cpr);
+    final String? userId = SanctionsService.userIdFromLogin(loginResponse);
+    List<AppNotification> notifications = const [];
+
+    debugPrint('[LOGIN PAGE] login user_id: $userId');
+
+    if (userId != null && userId.isNotEmpty) {
+      try {
+        notifications = await _service.getUserNotifications(userId: userId);
+      } catch (error) {
+        debugPrint('[LOGIN PAGE] bl_get_user_notifications error: $error');
+      }
+    } else {
+      debugPrint(
+        '[LOGIN PAGE] login response did not include user_id; '
+        'skipping bl_get_user_notifications',
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    SessionScope.read(context).setSignedIn(
+      cpr: cpr,
+      userId: userId,
+      notifications: notifications,
+    );
   }
 
   // ============================================================
