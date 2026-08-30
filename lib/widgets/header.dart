@@ -1,52 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/app_notification.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'account_drawer.dart';
 import 'directional_chevron.dart';
 import 'language_toggle.dart';
+import 'notification_button.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showBackButton;
-  final bool showLogout;
-  final VoidCallback? onLogout;
+  final int unreadCount;
+  final List<AppNotification> notifications;
+  final ValueChanged<AppNotification>? onNotificationTap;
 
   const Header({
     super.key,
     required this.title,
     this.showBackButton = false,
-    this.showLogout = false,
-    this.onLogout,
+    this.unreadCount = 0,
+    this.notifications = const [],
+    this.onNotificationTap,
   });
-
-  Future<void> _confirmLogout(BuildContext context) async {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.logOut),
-          content: Text(l10n.logOutConfirm),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.logOut),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      onLogout?.call();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,31 +31,37 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       automaticallyImplyLeading: false,
-      leading: showBackButton
-          ? IconButton(
+      leadingWidth: showBackButton ? 104 : 56,
+      leading: Row(
+        children: [
+          if (showBackButton)
+            IconButton(
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               onPressed: () => Navigator.maybePop(context),
               icon: const DirectionalBackIcon(),
-            )
-          : null,
+            ),
+          NotificationButton(
+            unreadCount: unreadCount,
+            notifications: notifications,
+            onNotificationTap: onNotificationTap,
+          ),
+        ],
+      ),
       title: Text(
         title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
-        style: AppTextStyles.heading.copyWith(
-          color: AppColors.onPrimary,
-        ),
+        style: AppTextStyles.heading.copyWith(color: AppColors.onPrimary),
       ),
       centerTitle: true,
       actions: [
         const LanguageToggleButton(),
-        if (showLogout && onLogout != null)
-          IconButton(
-            tooltip: l10n.logOut,
-            onPressed: () => _confirmLogout(context),
-            icon: const Icon(Icons.logout),
-          ),
+        IconButton(
+          tooltip: l10n.accountMenu,
+          onPressed: () => showAccountDrawer(context: context),
+          icon: const Icon(Icons.more_vert),
+        ),
       ],
     );
   }

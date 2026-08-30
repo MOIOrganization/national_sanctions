@@ -101,6 +101,18 @@ class AppTheme {
           ),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          minimumSize: const Size(64, 44),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          textStyle: AppTextStyles.button,
+          side: const BorderSide(color: AppColors.primary),
+          shape: const RoundedRectangleBorder(
+            borderRadius: AppRadius.border,
+          ),
+        ),
+      ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,

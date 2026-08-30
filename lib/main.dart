@@ -8,6 +8,7 @@ import 'pages/national/national_sanctions_page.dart';
 import 'pages/un/un_entities_page.dart';
 import 'pages/un/un_individuals_page.dart';
 import 'pages/un/un_sanctions_page.dart';
+import 'session/session_controller.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
 import 'widgets/navbar.dart';
@@ -25,26 +26,56 @@ class NationalSanctionsApp extends StatefulWidget {
 
 class _NationalSanctionsAppState extends State<NationalSanctionsApp> {
   final AppLocaleController _localeController = AppLocaleController();
+  final SessionController _sessionController = SessionController();
+
+  @override
+  void initState() {
+    super.initState();
+    _localeController.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    _localeController.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return LocaleScope(
       controller: _localeController,
-      child: ListenableBuilder(
-        listenable: _localeController,
-        builder: (context, _) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Sanctions',
-            theme: AppTheme.lightTheme,
-            locale: _localeController.locale,
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            home: const LoginPage(),
-          );
-        },
+      child: SessionScope(
+        controller: _sessionController,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Sanctions',
+          theme: AppTheme.lightTheme,
+          locale: _localeController.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const AuthGate(),
+        ),
       ),
     );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final SessionController session = SessionScope.of(context);
+
+    if (session.isSignedIn) {
+      return const MainScreen();
+    }
+
+    return const LoginPage();
   }
 }
 
@@ -62,14 +93,6 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _currentIndex = index;
     });
-  }
-
-  void _logout() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
   }
 
   void _openIndividuals() {
@@ -120,11 +143,7 @@ class _MainScreenState extends State<MainScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: Header(
-        title: _pageTitle(l10n),
-        showLogout: true,
-        onLogout: _logout,
-      ),
+      appBar: Header(title: _pageTitle(l10n)),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,

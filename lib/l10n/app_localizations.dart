@@ -176,6 +176,66 @@ abstract class AppLocalizations {
   /// **'Please enter your block number'**
   String get blockRequired;
 
+  /// No description provided for @mobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Number'**
+  String get mobileNumber;
+
+  /// No description provided for @enterMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter mobile number'**
+  String get enterMobile;
+
+  /// No description provided for @mobileRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your mobile number'**
+  String get mobileRequired;
+
+  /// No description provided for @mobileMustBe8.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number must be 8 digits'**
+  String get mobileMustBe8;
+
+  /// No description provided for @otpVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Verification'**
+  String get otpVerification;
+
+  /// No description provided for @enterOtpSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the verification code sent to +973 {phone}.'**
+  String enterOtpSentTo(String phone);
+
+  /// No description provided for @resendOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend OTP'**
+  String get resendOtp;
+
+  /// No description provided for @otpResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new OTP has been sent.'**
+  String get otpResent;
+
+  /// No description provided for @enterSixDigitOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the 6-digit OTP.'**
+  String get enterSixDigitOtp;
+
+  /// No description provided for @verifyAndLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify and Login'**
+  String get verifyAndLogin;
+
   /// No description provided for @unableToLogin.
   ///
   /// In en, this message translates to:
@@ -185,7 +245,7 @@ abstract class AppLocalizations {
   /// No description provided for @logOut.
   ///
   /// In en, this message translates to:
-  /// **'Log out'**
+  /// **'Logout'**
   String get logOut;
 
   /// No description provided for @logOutConfirm.
@@ -925,6 +985,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This record does not have a valid data ID.'**
   String get invalidRecordId;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @noNotificationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get noNotificationsYet;
+
+  /// No description provided for @noNotificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have any notifications at the moment.'**
+  String get noNotificationsMessage;
+
+  /// No description provided for @accountMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountMenu;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as'**
+  String get signedInAs;
+
+  /// No description provided for @biometricLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric Login'**
+  String get biometricLogin;
+
+  /// No description provided for @biometricLoginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use biometric authentication to sign in'**
+  String get biometricLoginDescription;
+
+  /// No description provided for @enableBiometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Biometric'**
+  String get enableBiometric;
+
+  /// No description provided for @disableBiometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Biometric'**
+  String get disableBiometric;
+
+  /// No description provided for @biometricEnabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric login enabled'**
+  String get biometricEnabledTitle;
+
+  /// No description provided for @biometricEnabledMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric login has been enabled successfully.'**
+  String get biometricEnabledMessage;
+
+  /// No description provided for @disableBiometricTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable biometric login?'**
+  String get disableBiometricTitle;
+
+  /// No description provided for @disableBiometricMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to disable biometric login?'**
+  String get disableBiometricMessage;
+
+  /// No description provided for @disable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get disable;
+
+  /// No description provided for @biometricDisabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric login disabled'**
+  String get biometricDisabledTitle;
+
+  /// No description provided for @biometricDisabledMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric login has been disabled.'**
+  String get biometricDisabledMessage;
+
+  /// No description provided for @biometricNotEnabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric Login Not Enabled'**
+  String get biometricNotEnabledTitle;
+
+  /// No description provided for @biometricNotEnabledMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable biometric login within the app after logging in.'**
+  String get biometricNotEnabledMessage;
+
+  /// No description provided for @logoutQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout?'**
+  String get logoutQuestion;
+
+  /// No description provided for @logoutConfirmQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get logoutConfirmQuestion;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
 }
 
 class _AppLocalizationsDelegate

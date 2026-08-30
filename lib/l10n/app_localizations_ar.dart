@@ -48,6 +48,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String get blockRequired => 'يرجى إدخال رقم المجمع';
 
   @override
+  String get mobileNumber => 'رقم الهاتف';
+
+  @override
+  String get enterMobile => 'أدخل رقم الهاتف';
+
+  @override
+  String get mobileRequired => 'يرجى إدخال رقم الهاتف';
+
+  @override
+  String get mobileMustBe8 => 'يجب أن يتكون رقم الهاتف من 8 أرقام';
+
+  @override
+  String get otpVerification => 'التحقق برمز OTP';
+
+  @override
+  String enterOtpSentTo(String phone) {
+    return 'أدخل رمز التحقق المرسل إلى +973 $phone.';
+  }
+
+  @override
+  String get resendOtp => 'إعادة إرسال الرمز';
+
+  @override
+  String get otpResent => 'تم إرسال رمز تحقق جديد.';
+
+  @override
+  String get enterSixDigitOtp => 'يرجى إدخال رمز التحقق المكوّن من 6 أرقام.';
+
+  @override
+  String get verifyAndLogin => 'تحقق وسجّل الدخول';
+
+  @override
   String get unableToLogin => 'تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.';
 
   @override
@@ -448,4 +480,70 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invalidRecordId => 'هذا السجل لا يحتوي على رقم بيانات صالح.';
+
+  @override
+  String get notifications => 'الإشعارات';
+
+  @override
+  String get noNotificationsYet => 'لا توجد إشعارات حتى الآن';
+
+  @override
+  String get noNotificationsMessage => 'لا توجد لديك إشعارات في الوقت الحالي.';
+
+  @override
+  String get accountMenu => 'الحساب';
+
+  @override
+  String get signedInAs => 'تم تسجيل الدخول باسم';
+
+  @override
+  String get biometricLogin => 'تسجيل الدخول بالبصمة';
+
+  @override
+  String get biometricLoginDescription =>
+      'استخدم المصادقة الحيوية لتسجيل الدخول';
+
+  @override
+  String get enableBiometric => 'تفعيل تسجيل الدخول بالبصمة';
+
+  @override
+  String get disableBiometric => 'تعطيل تسجيل الدخول بالبصمة';
+
+  @override
+  String get biometricEnabledTitle => 'تم تفعيل تسجيل الدخول بالبصمة';
+
+  @override
+  String get biometricEnabledMessage => 'تم تفعيل تسجيل الدخول بالبصمة بنجاح.';
+
+  @override
+  String get disableBiometricTitle => 'تعطيل تسجيل الدخول بالبصمة؟';
+
+  @override
+  String get disableBiometricMessage =>
+      'هل أنت متأكد أنك تريد تعطيل تسجيل الدخول بالبصمة؟';
+
+  @override
+  String get disable => 'تعطيل';
+
+  @override
+  String get biometricDisabledTitle => 'تم تعطيل تسجيل الدخول بالبصمة';
+
+  @override
+  String get biometricDisabledMessage => 'تم تعطيل تسجيل الدخول بالبصمة.';
+
+  @override
+  String get biometricNotEnabledTitle => 'لم يتم تفعيل تسجيل الدخول بالبصمة';
+
+  @override
+  String get biometricNotEnabledMessage =>
+      'يرجى تفعيل تسجيل الدخول بالبصمة من داخل التطبيق بعد تسجيل الدخول.';
+
+  @override
+  String get logoutQuestion => 'تسجيل الخروج؟';
+
+  @override
+  String get logoutConfirmQuestion => 'هل أنت متأكد أنك تريد تسجيل الخروج؟';
+
+  @override
+  String get ok => 'حسناً';
 }

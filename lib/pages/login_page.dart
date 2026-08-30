@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
-import '../main.dart';
 import '../services/sanctions_service.dart';
+import '../session/session_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/app_alert.dart';
 import '../widgets/language_toggle.dart';
 
 class LoginPage extends StatefulWidget {
@@ -23,8 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _cprController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _blockController = TextEditingController();
-  // OTP is not required by mob_un_login. Restore with the OTP dialog below.
-  // final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   bool _isLoggingIn = false;
   String? _formError;
@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       lastDate: DateTime(now.year + 15),
     );
 
-    if (picked == null) {
+    if (picked == null || !mounted) {
       return;
     }
 
@@ -97,15 +97,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      // OTP is not required by mob_un_login. Restore by calling _showOtpDialog()
-      // here instead of navigating to MainScreen.
-      // await _showOtpDialog();
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-        (route) => false,
-      );
+      await _showOtpDialog();
     } on SanctionsApiException catch (error) {
       debugPrint('[LOGIN PAGE] mob_un_login error: $error');
 
@@ -135,179 +127,40 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // OTP is not required by mob_un_login. Restore this dialog and the mobile
-  // number field when OTP verification is added.
-  //
-  // Future<void> _showOtpDialog() async {
-  //   final TextEditingController otpController = TextEditingController();
-  //
-  //   bool isVerifying = false;
-  //
-  //   await showDialog<void>(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (dialogContext) {
-  //       return StatefulBuilder(
-  //         builder: (context, setDialogState) {
-  //           return AlertDialog(
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(18),
-  //             ),
-  //             titlePadding: const EdgeInsets.fromLTRB(22, 22, 12, 0),
-  //             contentPadding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
-  //             actionsPadding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
-  //             title: Row(
-  //               children: [
-  //                 const Expanded(
-  //                   child: Text(
-  //                     'OTP Verification',
-  //                     style: TextStyle(fontWeight: FontWeight.bold),
-  //                   ),
-  //                 ),
-  //                 IconButton(
-  //                   onPressed: isVerifying
-  //                       ? null
-  //                       : () {
-  //                           Navigator.pop(dialogContext);
-  //                         },
-  //                   icon: const Icon(Icons.close),
-  //                 ),
-  //               ],
-  //             ),
-  //             content: SizedBox(
-  //               width: 380,
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 children: [
-  //                   const Icon(
-  //                     Icons.sms_outlined,
-  //                     size: 48,
-  //                     color: AppColors.primary,
-  //                   ),
-  //                   const SizedBox(height: 14),
-  //                   Text(
-  //                     'Enter the verification code sent to +973 ${_phoneController.text.trim()}.',
-  //                     textAlign: TextAlign.center,
-  //                     style: const TextStyle(
-  //                       color: AppColors.textSecondary,
-  //                       height: 1.5,
-  //                     ),
-  //                   ),
-  //                   const SizedBox(height: 22),
-  //                   TextField(
-  //                     controller: otpController,
-  //                     keyboardType: TextInputType.number,
-  //                     textAlign: TextAlign.center,
-  //                     maxLength: 6,
-  //                     inputFormatters: [
-  //                       FilteringTextInputFormatter.digitsOnly,
-  //                     ],
-  //                     style: const TextStyle(
-  //                       fontSize: 24,
-  //                       fontWeight: FontWeight.bold,
-  //                       letterSpacing: 10,
-  //                     ),
-  //                     decoration: const InputDecoration(
-  //                       hintText: '------',
-  //                       counterText: '',
-  //                     ),
-  //                   ),
-  //                   const SizedBox(height: 8),
-  //                   const Text(
-  //                     'Demo mode: any 6-digit OTP will be accepted.',
-  //                     textAlign: TextAlign.center,
-  //                     style: TextStyle(
-  //                       fontSize: 12,
-  //                       color: AppColors.textSecondary,
-  //                     ),
-  //                   ),
-  //                   const SizedBox(height: 6),
-  //                   TextButton(
-  //                     onPressed: isVerifying
-  //                         ? null
-  //                         : () {
-  //                             ScaffoldMessenger.of(context).showSnackBar(
-  //                               const SnackBar(
-  //                                 content: Text(
-  //                                   'A new demo OTP has been sent.',
-  //                                 ),
-  //                               ),
-  //                             );
-  //                           },
-  //                     child: const Text('Resend OTP'),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //             actions: [
-  //               SizedBox(
-  //                 width: double.infinity,
-  //                 height: 50,
-  //                 child: FilledButton(
-  //                   onPressed: isVerifying
-  //                       ? null
-  //                       : () async {
-  //                           final String otp = otpController.text.trim();
-  //
-  //                           if (otp.length != 6) {
-  //                             ScaffoldMessenger.of(context).showSnackBar(
-  //                               const SnackBar(
-  //                                 content: Text(
-  //                                   'Please enter the 6-digit OTP.',
-  //                                 ),
-  //                               ),
-  //                             );
-  //
-  //                             return;
-  //                           }
-  //
-  //                           setDialogState(() {
-  //                             isVerifying = true;
-  //                           });
-  //
-  //                           await Future.delayed(
-  //                             const Duration(milliseconds: 600),
-  //                           );
-  //
-  //                           if (!mounted) return;
-  //
-  //                           Navigator.pop(dialogContext);
-  //
-  //                           Navigator.pushAndRemoveUntil(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (_) => const MainScreen(),
-  //                             ),
-  //                             (route) => false,
-  //                           );
-  //                         },
-  //                   child: isVerifying
-  //                       ? const SizedBox(
-  //                           height: 22,
-  //                           width: 22,
-  //                           child: CircularProgressIndicator(
-  //                             strokeWidth: 2,
-  //                             color: Colors.white,
-  //                           ),
-  //                         )
-  //                       : const Text(
-  //                           'Verify and Login',
-  //                           style: TextStyle(
-  //                             fontSize: 16,
-  //                             fontWeight: FontWeight.bold,
-  //                           ),
-  //                         ),
-  //                 ),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  //
-  //   otpController.dispose();
-  // }
+  Future<void> _onBiometricLoginPressed() async {
+    final SessionController session = SessionScope.read(context);
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
+    if (!session.biometricEnabled) {
+      await showAppAlert(
+        context: context,
+        title: l10n.biometricNotEnabledTitle,
+        message: l10n.biometricNotEnabledMessage,
+      );
+      return;
+    }
+
+    await session.authenticateForLogin();
+  }
+
+  Future<void> _showOtpDialog() async {
+    final String phone = _phoneController.text.trim();
+    final String cpr = _cprController.text.trim();
+
+    final bool? verified = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _OtpVerificationDialog(phone: phone);
+      },
+    );
+
+    if (!mounted || verified != true) {
+      return;
+    }
+
+    SessionScope.read(context).setSignedInCpr(cpr);
+  }
 
   // ============================================================
   // DISPOSE
@@ -318,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
     _cprController.dispose();
     _expiryController.dispose();
     _blockController.dispose();
-    // _phoneController.dispose();
+    _phoneController.dispose();
 
     super.dispose();
   }
@@ -504,14 +357,13 @@ class _LoginPageState extends State<LoginPage> {
                                   TextFormField(
                                     controller: _blockController,
                                     keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.done,
+                                    textInputAction: TextInputAction.next,
                                     textDirection: TextDirection.ltr,
                                     maxLength: 4,
                                     enabled: !_isLoggingIn,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.digitsOnly,
                                     ],
-                                    onFieldSubmitted: (_) => _continue(),
                                     onChanged: (_) {
                                       if (_formError != null) {
                                         setState(() {
@@ -537,56 +389,62 @@ class _LoginPageState extends State<LoginPage> {
                                       return null;
                                     },
                                   ),
-                                  // OTP is not required by mob_un_login. Restore this
-                                  // field with the OTP dialog when OTP is added.
-                                  //
-                                  // const SizedBox(height: 16),
-                                  // TextFormField(
-                                  //   controller: _phoneController,
-                                  //   keyboardType: TextInputType.phone,
-                                  //   textInputAction: TextInputAction.done,
-                                  //   maxLength: 8,
-                                  //   inputFormatters: [
-                                  //     FilteringTextInputFormatter.digitsOnly,
-                                  //   ],
-                                  //   onFieldSubmitted: (_) => _continue(),
-                                  //   decoration: const InputDecoration(
-                                  //     labelText: 'Mobile Number',
-                                  //     hintText: 'Enter mobile number',
-                                  //     prefixIcon: Padding(
-                                  //       padding: EdgeInsets.symmetric(
-                                  //         horizontal: 12,
-                                  //       ),
-                                  //       child: Row(
-                                  //         mainAxisSize: MainAxisSize.min,
-                                  //         children: [
-                                  //           Icon(Icons.phone_outlined),
-                                  //           SizedBox(width: 7),
-                                  //           Text(
-                                  //             '+973',
-                                  //             style: TextStyle(
-                                  //               fontWeight: FontWeight.w600,
-                                  //             ),
-                                  //           ),
-                                  //         ],
-                                  //       ),
-                                  //     ),
-                                  //     counterText: '',
-                                  //   ),
-                                  //   validator: (value) {
-                                  //     final String text = value?.trim() ?? '';
-                                  //
-                                  //     if (text.isEmpty) {
-                                  //       return 'Please enter your mobile number';
-                                  //     }
-                                  //
-                                  //     if (text.length != 8) {
-                                  //       return 'Mobile number must be 8 digits';
-                                  //     }
-                                  //
-                                  //     return null;
-                                  //   },
-                                  // ),
+                                  const SizedBox(height: AppSpacing.lg),
+                                  TextFormField(
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
+                                    textInputAction: TextInputAction.done,
+                                    textDirection: TextDirection.ltr,
+                                    maxLength: 8,
+                                    enabled: !_isLoggingIn,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onFieldSubmitted: (_) => _continue(),
+                                    onChanged: (_) {
+                                      if (_formError != null) {
+                                        setState(() {
+                                          _formError = null;
+                                        });
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: l10n.mobileNumber,
+                                      hintText: l10n.enterMobile,
+                                      prefixIcon: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.phone_outlined),
+                                            SizedBox(width: 7),
+                                            Text(
+                                              '+973',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      counterText: '',
+                                    ),
+                                    validator: (value) {
+                                      final String text = value?.trim() ?? '';
+
+                                      if (text.isEmpty) {
+                                        return l10n.mobileRequired;
+                                      }
+
+                                      if (text.length != 8) {
+                                        return l10n.mobileMustBe8;
+                                      }
+
+                                      return null;
+                                    },
+                                  ),
                                   if (_formError != null) ...[
                                     const SizedBox(height: AppSpacing.lg),
                                     Container(
@@ -647,6 +505,33 @@ class _LoginPageState extends State<LoginPage> {
                                           : Text(l10n.login),
                                     ),
                                   ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: OutlinedButton(
+                                      onPressed: _isLoggingIn
+                                          ? null
+                                          : _onBiometricLoginPressed,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.fingerprint,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: AppSpacing.sm),
+                                          Flexible(
+                                            child: Text(
+                                              l10n.biometricLogin,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -662,6 +547,148 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _OtpVerificationDialog extends StatefulWidget {
+  const _OtpVerificationDialog({required this.phone});
+
+  final String phone;
+
+  @override
+  State<_OtpVerificationDialog> createState() =>
+      _OtpVerificationDialogState();
+}
+
+class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
+  final TextEditingController _otpController = TextEditingController();
+  bool _isVerifying = false;
+
+  @override
+  void dispose() {
+    _otpController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    if (_isVerifying) {
+      return;
+    }
+
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String otp = _otpController.text.trim();
+
+    if (otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.enterSixDigitOtp)),
+      );
+      return;
+    }
+
+    setState(() {
+      _isVerifying = true;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
+    return AlertDialog(
+      titlePadding: const EdgeInsets.fromLTRB(22, 22, 12, 0),
+      contentPadding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
+      actionsPadding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.otpVerification,
+              style: AppTextStyles.heading,
+            ),
+          ),
+          IconButton(
+            onPressed: _isVerifying ? null : () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 380,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.sms_outlined,
+              size: 48,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              l10n.enterOtpSentTo(widget.phone),
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body.copyWith(color: AppColors.muted),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: _otpController,
+              enabled: !_isVerifying,
+              keyboardType: TextInputType.number,
+              textDirection: TextDirection.ltr,
+              textAlign: TextAlign.center,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 10,
+              ),
+              decoration: const InputDecoration(
+                hintText: '------',
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            TextButton(
+              onPressed: _isVerifying
+                  ? null
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.otpResent)),
+                      );
+                    },
+              child: Text(l10n.resendOtp),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: FilledButton(
+            onPressed: _isVerifying ? null : _verify,
+            child: _isVerifying
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(l10n.verifyAndLogin),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -48,10 +48,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blockRequired => 'Please enter your block number';
 
   @override
+  String get mobileNumber => 'Mobile Number';
+
+  @override
+  String get enterMobile => 'Enter mobile number';
+
+  @override
+  String get mobileRequired => 'Please enter your mobile number';
+
+  @override
+  String get mobileMustBe8 => 'Mobile number must be 8 digits';
+
+  @override
+  String get otpVerification => 'OTP Verification';
+
+  @override
+  String enterOtpSentTo(String phone) {
+    return 'Enter the verification code sent to +973 $phone.';
+  }
+
+  @override
+  String get resendOtp => 'Resend OTP';
+
+  @override
+  String get otpResent => 'A new OTP has been sent.';
+
+  @override
+  String get enterSixDigitOtp => 'Please enter the 6-digit OTP.';
+
+  @override
+  String get verifyAndLogin => 'Verify and Login';
+
+  @override
   String get unableToLogin => 'Unable to login. Please try again.';
 
   @override
-  String get logOut => 'Log out';
+  String get logOut => 'Logout';
 
   @override
   String get logOutConfirm =>
@@ -449,4 +481,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidRecordId => 'This record does not have a valid data ID.';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get noNotificationsYet => 'No notifications yet';
+
+  @override
+  String get noNotificationsMessage =>
+      'You don\'t have any notifications at the moment.';
+
+  @override
+  String get accountMenu => 'Account';
+
+  @override
+  String get signedInAs => 'Signed in as';
+
+  @override
+  String get biometricLogin => 'Biometric Login';
+
+  @override
+  String get biometricLoginDescription =>
+      'Use biometric authentication to sign in';
+
+  @override
+  String get enableBiometric => 'Enable Biometric';
+
+  @override
+  String get disableBiometric => 'Disable Biometric';
+
+  @override
+  String get biometricEnabledTitle => 'Biometric login enabled';
+
+  @override
+  String get biometricEnabledMessage =>
+      'Biometric login has been enabled successfully.';
+
+  @override
+  String get disableBiometricTitle => 'Disable biometric login?';
+
+  @override
+  String get disableBiometricMessage =>
+      'Are you sure you want to disable biometric login?';
+
+  @override
+  String get disable => 'Disable';
+
+  @override
+  String get biometricDisabledTitle => 'Biometric login disabled';
+
+  @override
+  String get biometricDisabledMessage => 'Biometric login has been disabled.';
+
+  @override
+  String get biometricNotEnabledTitle => 'Biometric Login Not Enabled';
+
+  @override
+  String get biometricNotEnabledMessage =>
+      'Please enable biometric login within the app after logging in.';
+
+  @override
+  String get logoutQuestion => 'Logout?';
+
+  @override
+  String get logoutConfirmQuestion => 'Are you sure you want to logout?';
+
+  @override
+  String get ok => 'OK';
 }
