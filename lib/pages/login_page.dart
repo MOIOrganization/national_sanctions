@@ -242,9 +242,9 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         children: [
                           Container(
-                            width: 140,
-                            height: 140,
-                            padding: const EdgeInsets.all(10),
+                            width: 350,
+                            height: 350,
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(
                                 AppRadius.hero,
@@ -260,29 +260,30 @@ class _LoginPageState extends State<LoginPage> {
                             child: Image.asset(
                               'asset/images/logo.png',
                               fit: BoxFit.contain,
+                              alignment: Alignment.bottomCenter,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            l10n.appTitle,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 27,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 7),
-                          Text(
-                            l10n.loginSubtitle,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
+                          // Text(
+                          //   l10n.appTitle,
+                          //   textAlign: TextAlign.center,
+                          //   style: const TextStyle(
+                          //     color: Colors.white,
+                          //     fontSize: 27,
+                          //     fontWeight: FontWeight.bold,
+                          //     height: 1,
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 4),
+                          // Text(
+                          //   l10n.loginSubtitle,
+                          //   textAlign: TextAlign.center,
+                          //   style: const TextStyle(
+                          //     color: Colors.white70,
+                          //     fontSize: 14,
+                          //     height: 1.5,
+                          //   ),
+                          // ),
+                          const SizedBox(height: 18),
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
