@@ -1,9 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_state.dart';
 import '../../widgets/header.dart';
+import '../../widgets/loading_state.dart';
+import '../../widgets/sanctions_list_row.dart';
+import '../../widgets/sanctions_list_shell.dart';
+import '../../widgets/search_field.dart';
 import 'national_person_details_page.dart';
 
 class NationalPersonsPage extends StatefulWidget {
@@ -15,9 +22,7 @@ class NationalPersonsPage extends StatefulWidget {
 
 class _NationalPersonsPageState extends State<NationalPersonsPage> {
   final SanctionsService _service = SanctionsService();
-
   final TextEditingController _searchController = TextEditingController();
-
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _allPersons = [];
@@ -31,22 +36,21 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-
     _scrollController.addListener(_onScroll);
-
     _loadPersons(refresh: true);
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (!_scrollController.hasClients) {
+      return;
+    }
 
-    final position = _scrollController.position;
+    final ScrollPosition position = _scrollController.position;
 
     if (position.pixels >= position.maxScrollExtent - 250) {
       _loadMorePersons();
@@ -65,11 +69,6 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
     }
 
     try {
-      debugPrint(
-        '🔄 [NATIONAL PERSONS] '
-        'offset=$_currentOffset limit=$_pageSize',
-      );
-
       final Map<String, dynamic> response = await _service.getNationalPersons(
         offset: _currentOffset,
         limit: _pageSize,
@@ -87,7 +86,9 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
 
       final int totalRecords = _toInt(response['total_records']);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         if (refresh) {
@@ -98,25 +99,19 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
 
         _totalRecords = totalRecords;
         _currentOffset = _allPersons.length;
-
         _hasMore = newPersons.isNotEmpty && _allPersons.length < totalRecords;
-
         _isLoading = false;
         _isLoadingMore = false;
       });
 
       _applySearch();
-
-      debugPrint(
-        '✅ [NATIONAL PERSONS] '
-        '${_allPersons.length}/$_totalRecords loaded',
-      );
     } catch (error, stackTrace) {
       debugPrint('❌ [NATIONAL PERSONS] $error');
-
       debugPrintStack(stackTrace: stackTrace);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _errorMessage = error.toString();
@@ -138,53 +133,58 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
     await _loadPersons();
   }
 
-  void _search(String value) {
-    _applySearch();
-  }
-
   void _applySearch() {
     final String query = _searchController.text.trim().toLowerCase();
 
     final results = _allPersons.where((person) {
-      // Search all simple fields because we don't
-      // yet have the exact person response structure.
+      if (query.isEmpty) {
+        return true;
+      }
+
       final String searchable = person.entries
           .where((entry) => entry.value is! List && entry.value is! Map)
           .map((entry) => entry.value?.toString() ?? '')
           .join(' ')
           .toLowerCase();
 
-      return query.isEmpty || searchable.contains(query);
+      return searchable.contains(query);
     }).toList();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _filteredPersons = results;
     });
   }
 
-  String _personName(Map<String, dynamic> person) {
-    final possibleNames = [
-      person['PERSON_NAME_IN_ARABIC'],
-      person['NAME_IN_ARABIC'],
-      person['FULL_NAME_ARABIC'],
-      person['PERSON_NAME_IN_ENGLISH'],
-      person['NAME_IN_ENGLISH'],
-      person['FULL_NAME_ENGLISH'],
-      person['RECORDED_NAME'],
-      person['FIRST_NAME'],
-    ];
+  String? _resultCountLabel(AppLocalizations l10n) {
+    if (_isLoading || _errorMessage != null) {
+      return null;
+    }
 
-    for (final value in possibleNames) {
-      final String text = _text(value);
+    if (_searchController.text.trim().isEmpty) {
+      return l10n.showingCount(_allPersons.length, _totalRecords);
+    }
+
+    return l10n.matchesCount(
+      _filteredPersons.length,
+      _allPersons.length,
+      _totalRecords,
+    );
+  }
+
+  String _firstText(Map<String, dynamic> data, List<String> keys) {
+    for (final String key in keys) {
+      final String text = _text(data[key]);
 
       if (text.isNotEmpty) {
         return text;
       }
     }
 
-    return 'Unnamed person';
+    return '';
   }
 
   void _openDetails(Map<String, dynamic> person) {
@@ -201,91 +201,71 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: const Header(title: 'National Persons', showBackButton: true),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _search,
-              decoration: InputDecoration(
-                hintText: 'Search by ID or name',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        onPressed: () {
-                          _searchController.clear();
-
-                          _applySearch();
-                        },
-                        icon: const Icon(Icons.close),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-
-          if (!_isLoading && _errorMessage == null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Showing '
-                  '${_filteredPersons.length} '
-                  'loaded of $_totalRecords persons',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-
-          Expanded(child: _buildContent()),
-        ],
+      appBar: Header(title: l10n.nationalPersons, showBackButton: true),
+      body: SanctionsListShell(
+        search: SearchField(
+          controller: _searchController,
+          hintText: l10n.searchByNameIdReference,
+          onChanged: (_) => _applySearch(),
+          onClear: () {
+            _searchController.clear();
+            _applySearch();
+          },
+          resultCountLabel: _resultCountLabel(l10n),
+        ),
+        body: _buildContent(l10n),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent([AppLocalizations? localizations]) {
+    final AppLocalizations l10n =
+        localizations ?? AppLocalizations.of(context);
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return LoadingState(message: l10n.loadingPersons);
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 52, color: Colors.red),
-              const SizedBox(height: 12),
-              Text(_errorMessage!, textAlign: TextAlign.center),
-              const SizedBox(height: 18),
-              FilledButton(
-                onPressed: () {
-                  _loadPersons(refresh: true);
-                },
-                child: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
+      return ErrorState(
+        title: l10n.unableToLoadPersons,
+        onRetry: () => _loadPersons(refresh: true),
       );
     }
 
     if (_filteredPersons.isEmpty) {
-      return const Center(child: Text('No matching persons found.'));
+      final bool searching = _searchController.text.trim().isNotEmpty;
+
+      return RefreshIndicator(
+        onRefresh: () => _loadPersons(refresh: true),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: constraints.maxHeight,
+                  child: EmptyState(
+                    icon: Icons.person_search_outlined,
+                    title: l10n.noResultsFound,
+                    message: searching
+                        ? l10n.noMatchesLoaded
+                        : l10n.noPersonsAvailable,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
     }
 
     return RefreshIndicator(
@@ -293,59 +273,52 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.xs,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
         itemCount: _filteredPersons.length + (_isLoadingMore ? 1 : 0),
-
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           if (index == _filteredPersons.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
           final person = _filteredPersons[index];
+          final names = DisplayNames.resolve(
+            fallback: l10n.unnamedPerson,
+            first: _firstText(person, [
+              'PERSON_NAME_IN_ARABIC',
+              'NAME_IN_ARABIC',
+              'FULL_NAME_ARABIC',
+            ]),
+            second: _firstText(person, [
+              'PERSON_NAME_IN_ENGLISH',
+              'NAME_IN_ENGLISH',
+              'FULL_NAME_ENGLISH',
+              'RECORDED_NAME',
+              'FIRST_NAME',
+            ]),
+          );
 
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                child: const Icon(
-                  Icons.person_outline,
-                  color: AppColors.primary,
-                ),
-              ),
-
-              title: Text(
-                _personName(person),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 7),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_text(person['ID']).isNotEmpty)
-                      Text('ID: ${person['ID']}'),
-
-                    if (_text(person['RECORDED_NAME']).isNotEmpty)
-                      Text(
-                        'Recorded name: '
-                        '${person['RECORDED_NAME']}',
-                      ),
-                  ],
-                ),
-              ),
-
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
-              onTap: () => _openDetails(person),
-            ),
+          return SanctionsListRow(
+            leadingIcon: Icons.person_outline,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: _text(person['ID']).isEmpty ? null : _text(person['ID']),
+            chips: [
+              _firstText(person, [
+                'NATIONALITY',
+                'NATIONALITY_IN_ARABIC',
+                'NATIONALITY_IN_ENGLISH',
+              ]),
+            ],
+            onTap: () => _openDetails(person),
           );
         },
       ),
@@ -353,7 +326,9 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
   }
 
   int _toInt(dynamic value) {
-    if (value is int) return value;
+    if (value is int) {
+      return value;
+    }
 
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }

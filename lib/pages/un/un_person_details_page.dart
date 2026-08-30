@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models.dart';
 import '../../services/sanctions_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/detail_fields.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/details_section.dart';
+import '../../widgets/error_state.dart';
 import '../../widgets/header.dart';
+import '../../widgets/loading_state.dart';
+import '../../widgets/record_profile_card.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final int dataId;
@@ -22,22 +29,21 @@ class PersonDetailsPage extends StatefulWidget {
 class _PersonDetailsPageState extends State<PersonDetailsPage> {
   final SanctionsService _service = SanctionsService();
 
-  Individual? _individual;
-  bool _isLoading = true;
-  String? _errorMessage;
+  late Individual _individual;
+  bool _isRefreshing = true;
+  String? _refreshError;
 
   @override
   void initState() {
     super.initState();
-
     _individual = widget.initialIndividual;
     _loadFullDetails();
   }
 
   Future<void> _loadFullDetails() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isRefreshing = true;
+      _refreshError = null;
     });
 
     try {
@@ -46,21 +52,25 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
         language: 'ARAB',
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _individual = result;
-        _isLoading = false;
+        _isRefreshing = false;
       });
     } catch (error, stackTrace) {
       debugPrint('❌ [INDIVIDUAL DETAILS] $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
-        _errorMessage = error.toString();
-        _isLoading = false;
+        _refreshError = error.toString();
+        _isRefreshing = false;
       });
     }
   }
@@ -68,522 +78,351 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(title: 'Individual Details', showBackButton: true),
+      appBar: Header(
+        title: AppLocalizations.of(context).individualDetails,
+        showBackButton: true,
+      ),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 14),
-            Text('Loading full individual details...'),
-          ],
-        ),
+    if (_individual.fullName.isEmpty &&
+        _individual.originalScriptName.isEmpty &&
+        _isRefreshing) {
+      return LoadingState(
+        message: AppLocalizations.of(context).loadingIndividualDetails,
       );
     }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 52,
-                color: AppColors.warning,
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Unable to load full details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: _loadFullDetails,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try again'),
-              ),
-            ],
-          ),
-        ),
+    if (_individual.fullName.isEmpty &&
+        _individual.originalScriptName.isEmpty &&
+        _refreshError != null &&
+        !_isRefreshing) {
+      return ErrorState(
+        title: AppLocalizations.of(context).unableToLoadIndividualDetails,
+        onRetry: _loadFullDetails,
       );
     }
 
-    final Individual individual = _individual!;
-    final Map<String, dynamic> data = individual.rawData;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProfileCard(individual),
-        const SizedBox(height: 14),
-
-        _DetailsSection(
-          title: 'Basic information',
-          icon: Icons.badge_outlined,
-          children: [
-            _DetailRow(label: 'Data ID', value: _value(data['DATAID'])),
-            _DetailRow(label: 'Version', value: _value(data['VERSIONNUM'])),
-            _DetailRow(label: 'First name', value: _value(data['FIRST_NAME'])),
-            _DetailRow(
-              label: 'Second name',
-              value: _value(data['SECOND_NAME']),
-            ),
-            _DetailRow(label: 'Third name', value: _value(data['THIRD_NAME'])),
-            _DetailRow(
-              label: 'Fourth name',
-              value: _value(data['FOURTH_NAME']),
-            ),
-            _DetailRow(
-              label: 'Original-script name',
-              value: _value(data['NAME_ORIGINAL_SCRIPT']),
-            ),
-            _DetailRow(
-              label: 'UN list type',
-              value: _value(data['UN_LIST_TYPE']),
-            ),
-            _DetailRow(
-              label: 'Reference number',
-              value: _value(data['REFERENCE_NUMBER']),
-            ),
-            _DetailRow(
-              label: 'Source file ID',
-              value: _value(data['SOURCE_FILE_ID']),
-            ),
-            _DetailRow(
-              label: 'Created date',
-              value: _value(data['CREATED_DATE']),
-            ),
-            _DetailRow(
-              label: 'Last updated date',
-              value: _value(data['LAST_UPDATED_DATE']),
-              showDivider: false,
-            ),
-          ],
-        ),
-
-        _buildAttributes(data['ATTR_VALUES']),
-        _buildAliases(data['ALIASES']),
-        _buildDatesOfBirth(data['DOBS']),
-        _buildPlacesOfBirth(data['POBS']),
-        _buildAddresses(data['ADDRESSES']),
-        _buildDocuments(data['DOCUMENTS']),
-        _buildInterpol(data),
-
-        if (_hasValue(data['COMMENTS1']))
-          _DetailsSection(
-            title: 'Comments and listing information',
-            icon: Icons.description_outlined,
-            children: [
-              Text(
-                _value(data['COMMENTS1']),
-                style: const TextStyle(
-                  height: 1.7,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-      ],
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final names = DisplayNames.resolve(
+      fallback: l10n.unnamedIndividual,
+      first: _individual.originalScriptName,
+      second: _individual.fullName,
     );
-  }
 
-  Widget _buildProfileCard(Individual individual) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 38,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-              child: const Icon(
-                Icons.person,
-                size: 40,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              individual.fullName.isEmpty
-                  ? 'Unnamed individual'
-                  : individual.fullName,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            if (individual.originalScriptName.isNotEmpty &&
-                individual.originalScriptName != individual.fullName) ...[
-              const SizedBox(height: 6),
-              Text(
-                individual.originalScriptName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              individual.referenceNumber,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAliases(dynamic rawAliases) {
-    final aliases = _mapList(rawAliases);
-
-    if (aliases.isEmpty) return const SizedBox.shrink();
-
-    return _DetailsSection(
-      title: 'Aliases',
-      icon: Icons.people_outline,
-      children: [
-        for (int index = 0; index < aliases.length; index++)
-          _NestedCard(
-            title: 'Alias ${index + 1}',
-            rows: {
-              'Sequence': aliases[index]['ALIAS_SEQ'],
-              'Quality': aliases[index]['QUALITY'],
-              'Alias name': aliases[index]['ALIAS_NAME'],
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildDatesOfBirth(dynamic rawDates) {
-    final dates = _mapList(rawDates);
-
-    if (dates.isEmpty) return const SizedBox.shrink();
-
-    return _DetailsSection(
-      title: 'Dates of birth',
-      icon: Icons.cake_outlined,
-      children: [
-        for (int index = 0; index < dates.length; index++)
-          _NestedCard(title: 'Date of birth ${index + 1}', rows: dates[index]),
-      ],
-    );
-  }
-
-  Widget _buildPlacesOfBirth(dynamic rawPlaces) {
-    final places = _mapList(rawPlaces);
-
-    if (places.isEmpty) return const SizedBox.shrink();
-
-    return _DetailsSection(
-      title: 'Places of birth',
-      icon: Icons.location_on_outlined,
-      children: [
-        for (int index = 0; index < places.length; index++)
-          _NestedCard(
-            title: 'Place of birth ${index + 1}',
-            rows: places[index],
-          ),
-      ],
-    );
-  }
-
-  Widget _buildAddresses(dynamic rawAddresses) {
-    final addresses = _mapList(rawAddresses);
-
-    final usefulAddresses = addresses.where((address) {
-      return address.entries.any(
-        (entry) => entry.key != 'ADDR_SEQ' && _hasValue(entry.value),
-      );
-    }).toList();
-
-    if (usefulAddresses.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return _DetailsSection(
-      title: 'Addresses',
-      icon: Icons.home_outlined,
-      children: [
-        for (int index = 0; index < usefulAddresses.length; index++)
-          _NestedCard(
-            title: 'Address ${index + 1}',
-            rows: usefulAddresses[index],
-          ),
-      ],
-    );
-  }
-
-  Widget _buildDocuments(dynamic rawDocuments) {
-    final documents = _mapList(rawDocuments);
-
-    if (documents.isEmpty) return const SizedBox.shrink();
-
-    return _DetailsSection(
-      title: 'Documents',
-      icon: Icons.article_outlined,
-      children: [
-        for (int index = 0; index < documents.length; index++)
-          _NestedCard(title: 'Document ${index + 1}', rows: documents[index]),
-      ],
-    );
-  }
-
-  Widget _buildAttributes(dynamic rawAttributes) {
-    final attributes = _mapList(rawAttributes);
-
-    if (attributes.isEmpty) return const SizedBox.shrink();
-
-    return _DetailsSection(
-      title: 'Attributes',
-      icon: Icons.list_alt_outlined,
-      children: [
-        for (int index = 0; index < attributes.length; index++)
-          _NestedCard(
-            title: _value(attributes[index]['ATTR_NAME']) == 'Not specified'
-                ? 'Attribute ${index + 1}'
-                : _value(attributes[index]['ATTR_NAME']),
-            rows: {
-              'Sequence': attributes[index]['VALUE_SEQ'],
-              'Value': attributes[index]['ATTR_VALUE'],
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildInterpol(Map<String, dynamic> data) {
-    if (!_hasValue(data['HAS_INTERPOL_LINK']) &&
-        !_hasValue(data['INTERPOL_LINK'])) {
-      return const SizedBox.shrink();
-    }
-
-    return _DetailsSection(
-      title: 'Interpol information',
-      icon: Icons.public_outlined,
-      children: [
-        _DetailRow(
-          label: 'Has Interpol link',
-          value: _value(data['HAS_INTERPOL_LINK']),
-        ),
-        _DetailRow(
-          label: 'Interpol link',
-          value: _value(data['INTERPOL_LINK']),
-          showDivider: false,
-        ),
-      ],
-    );
-  }
-
-  static List<Map<String, dynamic>> _mapList(dynamic value) {
-    if (value is! List) return [];
-
-    return value
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
-  }
-
-  static bool _hasValue(dynamic value) {
-    if (value == null) return false;
-
-    final text = value.toString().trim();
-
-    return text.isNotEmpty && text.toLowerCase() != 'null';
-  }
-
-  static String _value(dynamic value) {
-    if (!_hasValue(value)) return 'Not specified';
-
-    return value.toString().trim();
-  }
-}
-
-class _DetailsSection extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-
-  const _DetailsSection({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: AppColors.primary),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ...children,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool showDivider;
-
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    this.showDivider = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (value == 'Not specified') {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 145,
-                child: Text(
-                  label,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-              Expanded(
-                child: SelectableText(
-                  value,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    height: 1.45,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (showDivider) const Divider(height: 1),
-      ],
-    );
-  }
-}
-
-class _NestedCard extends StatelessWidget {
-  final String title;
-  final Map<String, dynamic> rows;
-
-  const _NestedCard({required this.title, required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    final usefulRows = rows.entries.where((entry) {
-      if (entry.value == null) return false;
-
-      final value = entry.value.toString().trim();
-
-      return value.isNotEmpty && value.toLowerCase() != 'null';
-    }).toList();
-
-    if (usefulRows.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return RefreshIndicator(
+      onRefresh: _loadFullDetails,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.page),
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+          RecordProfileCard(
+            icon: Icons.person,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: _individual.referenceNumber,
           ),
-          const SizedBox(height: 10),
-          for (final entry in usefulRows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 7),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 130,
-                    child: Text(
-                      _formatKey(entry.key),
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ),
-                  Expanded(
-                    child: SelectableText(
-                      entry.value.toString(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          if (_isRefreshing)
+            const Padding(
+              padding: EdgeInsets.only(top: AppSpacing.md),
+              child: LinearProgressIndicator(),
             ),
+          if (_refreshError != null && !_isRefreshing)
+            DetailsRefreshBanner(
+              message: AppLocalizations.of(context).unableToRefreshRecord,
+              onRetry: _loadFullDetails,
+            ),
+          DetailsSectionBlock(
+            title: l10n.identity,
+            icon: Icons.badge_outlined,
+            rows: [
+              DetailRow(
+                label: l10n.originalScriptName,
+                value: _individual.originalScriptName,
+              ),
+              DetailRow(label: l10n.firstName, value: _individual.firstName),
+              DetailRow(label: l10n.secondName, value: _individual.secondName),
+              DetailRow(label: l10n.thirdName, value: _individual.thirdName),
+              DetailRow(label: l10n.fourthName, value: _individual.fourthName),
+              DetailRow(label: l10n.listType, value: _individual.unListType),
+              DetailRow(
+                label: l10n.referenceNumber,
+                value: _individual.referenceNumber,
+              ),
+              for (final String designation in _individual.designations)
+                DetailRow(label: l10n.designation, value: designation),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.nationality,
+            icon: Icons.flag_outlined,
+            rows: [
+              for (final IndividualAttribute attribute
+                  in _nationalityAttributes)
+                DetailRow(label: l10n.nationality, value: attribute.value),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.dateOfBirth,
+            icon: Icons.cake_outlined,
+            rows: [
+              for (
+                int index = 0;
+                index < _individual.datesOfBirth.length;
+                index++
+              )
+                ..._dateOfBirthRows(_individual.datesOfBirth[index], index),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.placeOfBirth,
+            icon: Icons.location_on_outlined,
+            rows: [
+              for (
+                int index = 0;
+                index < _individual.placesOfBirth.length;
+                index++
+              )
+                DetailRow(
+                  label: _individual.placesOfBirth.length == 1
+                      ? l10n.placeOfBirth
+                      : l10n.placeOfBirthN(index + 1),
+                  value: DetailFields.joinParts([
+                    _individual.placesOfBirth[index].city,
+                    _individual.placesOfBirth[index].stateProvince,
+                    _individual.placesOfBirth[index].country,
+                  ]),
+                ),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.documents,
+            icon: Icons.article_outlined,
+            rows: [
+              for (int index = 0; index < _individual.documents.length; index++)
+                ..._documentRows(_individual.documents[index], index),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.aliases,
+            icon: Icons.people_outline,
+            rows: [
+              for (int index = 0; index < _individual.aliases.length; index++)
+                ..._aliasRows(_individual.aliases[index], index),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.addresses,
+            icon: Icons.home_outlined,
+            rows: [
+              for (int index = 0; index < _individual.addresses.length; index++)
+                DetailRow(
+                  label: _individual.addresses.length == 1
+                      ? l10n.address
+                      : l10n.addressN(index + 1),
+                  value: DetailFields.joinParts([
+                    _individual.addresses[index].address,
+                    _individual.addresses[index].city,
+                    _individual.addresses[index].stateProvince,
+                    _individual.addresses[index].country,
+                    _individual.addresses[index].note,
+                  ]),
+                ),
+            ],
+          ),
+          _interpolSection(),
+          DetailsSectionBlock(
+            title: l10n.listingInformation,
+            icon: Icons.description_outlined,
+            rows: [
+              DetailRow(label: l10n.comments, value: _individual.comments),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.additionalInformation,
+            icon: Icons.more_horiz,
+            rows: _additionalRows(),
+          ),
         ],
       ),
     );
   }
 
-  static String _formatKey(String key) {
-    return key
-        .toLowerCase()
-        .split('_')
-        .map(
-          (word) => word.isEmpty
-              ? ''
-              : '${word[0].toUpperCase()}${word.substring(1)}',
+  List<IndividualAttribute> get _nationalityAttributes {
+    return _individual.attributes
+        .where(
+          (attribute) =>
+              attribute.name.toUpperCase() == 'NATIONALITY' &&
+              attribute.value.trim().isNotEmpty,
         )
-        .join(' ');
+        .toList();
+  }
+
+  List<Widget> _dateOfBirthRows(IndividualDateOfBirth date, int index) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String label = _individual.datesOfBirth.length == 1
+        ? l10n.dateOfBirth
+        : l10n.dateOfBirthN(index + 1);
+
+    return [
+      DetailRow(label: label, value: date.displayValue),
+      DetailRow(label: l10n.type, value: date.typeOfDate),
+    ];
+  }
+
+  List<Widget> _documentRows(IndividualDocument document, int index) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String label = document.type.isNotEmpty
+        ? document.type
+        : (_individual.documents.length == 1
+              ? l10n.document
+              : l10n.documentN(index + 1));
+
+    return [
+      DetailRow(label: label, value: document.number),
+      DetailRow(label: l10n.countryOfIssue, value: document.countryOfIssue),
+      DetailRow(label: l10n.note, value: document.note),
+    ];
+  }
+
+  List<Widget> _aliasRows(IndividualAlias alias, int index) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String label = _individual.aliases.length == 1
+        ? l10n.alias
+        : l10n.aliasN(index + 1);
+
+    return [
+      DetailRow(label: label, value: alias.name),
+      DetailRow(label: l10n.quality, value: alias.quality),
+    ];
+  }
+
+  Widget _interpolSection() {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String link = _individual.interpolLink;
+    final bool hasLinkFlag = _individual.hasInterpolLink.trim().isNotEmpty;
+
+    if (link.isEmpty && !hasLinkFlag) {
+      return const SizedBox.shrink();
+    }
+
+    if (DetailFields.isHttpUrl(link)) {
+      return DetailsSectionBlock(
+        title: l10n.interpol,
+        icon: Icons.public_outlined,
+        rows: [
+          DetailRow(
+            label: l10n.interpolNotice,
+            value: link,
+            isLink: true,
+            onValueTap: () => DetailFields.openExternalUrl(link),
+          ),
+        ],
+      );
+    }
+
+    if (link.isNotEmpty) {
+      return DetailsSectionBlock(
+        title: l10n.interpol,
+        icon: Icons.public_outlined,
+        rows: [DetailRow(label: l10n.interpolNotice, value: link)],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  List<Widget> _additionalRows() {
+    final List<Widget> rows = [];
+    final Set<String> handledAttributeNames = {'NATIONALITY', 'DESIGNATION'};
+
+    for (final IndividualAttribute attribute in _individual.attributes) {
+      if (handledAttributeNames.contains(attribute.name.toUpperCase())) {
+        continue;
+      }
+
+      if (attribute.value.isEmpty) {
+        continue;
+      }
+
+      rows.add(
+        DetailRow(
+          label: attribute.name.isEmpty
+              ? AppLocalizations.of(context).detail
+              : attribute.name,
+          value: attribute.value,
+        ),
+      );
+    }
+
+    const Set<String> handledRawKeys = {
+      'DATAID',
+      'VERSIONNUM',
+      'FIRST_NAME',
+      'SECOND_NAME',
+      'THIRD_NAME',
+      'FOURTH_NAME',
+      'NAME_ORIGINAL_SCRIPT',
+      'UN_LIST_TYPE',
+      'REFERENCE_NUMBER',
+      'COMMENTS1',
+      'HAS_INTERPOL_LINK',
+      'INTERPOL_LINK',
+      'SOURCE_FILE_ID',
+      'CREATED_DATE',
+      'LAST_UPDATED_DATE',
+      'ALIASES',
+      'ADDRESSES',
+      'DOBS',
+      'POBS',
+      'DOCUMENTS',
+      'ATTR_VALUES',
+    };
+
+    for (final MapEntry<String, dynamic> entry in _individual.rawData.entries) {
+      if (handledRawKeys.contains(entry.key) ||
+          DetailFields.sequenceKeys.contains(entry.key)) {
+        continue;
+      }
+
+      if (entry.value is List || entry.value is Map) {
+        continue;
+      }
+
+      final String value = DetailFields.text(entry.value);
+
+      if (value.isEmpty) {
+        continue;
+      }
+
+      rows.add(
+        DetailRow(label: DetailFields.humanizeKey(entry.key), value: value),
+      );
+    }
+
+    rows.add(
+      DetailRow(
+        label: AppLocalizations.of(context).created,
+        value: DetailFields.date(_individual.createdDate?.toIso8601String()),
+      ),
+    );
+    rows.add(
+      DetailRow(
+        label: AppLocalizations.of(context).lastUpdated,
+        value: DetailFields.date(
+          _individual.lastUpdatedDate?.toIso8601String(),
+        ),
+      ),
+    );
+    rows.add(
+      DetailRow(
+        label: AppLocalizations.of(context).recordId,
+        value: _individual.dataId.toString(),
+      ),
+    );
+
+    return rows;
   }
 }

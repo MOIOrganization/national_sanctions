@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'pages/un/un_entities_page.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/locale_controller.dart';
 import 'pages/home_page.dart';
-import 'pages/un/un_individuals_page.dart';
 import 'pages/login_page.dart';
-import 'pages/national/national_persons_page.dart';
 import 'pages/national/national_sanctions_page.dart';
+import 'pages/un/un_entities_page.dart';
+import 'pages/un/un_individuals_page.dart';
 import 'pages/un/un_sanctions_page.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
@@ -15,16 +16,34 @@ void main() {
   runApp(const NationalSanctionsApp());
 }
 
-class NationalSanctionsApp extends StatelessWidget {
+class NationalSanctionsApp extends StatefulWidget {
   const NationalSanctionsApp({super.key});
 
   @override
+  State<NationalSanctionsApp> createState() => _NationalSanctionsAppState();
+}
+
+class _NationalSanctionsAppState extends State<NationalSanctionsApp> {
+  final AppLocaleController _localeController = AppLocaleController();
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Sanctions',
-      theme: AppTheme.lightTheme,
-      home: const LoginPage(),
+    return LocaleScope(
+      controller: _localeController,
+      child: ListenableBuilder(
+        listenable: _localeController,
+        builder: (context, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Sanctions',
+            theme: AppTheme.lightTheme,
+            locale: _localeController.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: const LoginPage(),
+          );
+        },
+      ),
     );
   }
 }
@@ -67,16 +86,14 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  String get _pageTitle {
+  String _pageTitle(AppLocalizations l10n) {
     switch (_currentIndex) {
       case 1:
-        return 'United Nations Sanctions';
-
+        return l10n.unSanctions;
       case 2:
-        return 'National Sanctions';
-
+        return l10n.nationalSanctions;
       default:
-        return 'Sanctions';
+        return l10n.appTitle;
     }
   }
 
@@ -90,20 +107,24 @@ class _MainScreenState extends State<MainScreen> {
           _changePage(2);
         },
       ),
-
       UnSanctionsPage(
         onOpenIndividuals: _openIndividuals,
         onOpenEntities: _openEntities,
       ),
-
       const NationalSanctionsPage(),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: Header(title: _pageTitle, showLogout: true, onLogout: _logout),
+      appBar: Header(
+        title: _pageTitle(l10n),
+        showLogout: true,
+        onLogout: _logout,
+      ),
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppNavbar(
         currentIndex: _currentIndex,
@@ -113,25 +134,20 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// =============================================================
-// INDIVIDUALS FULL SCREEN
-// =============================================================
-
 class _IndividualsScreen extends StatelessWidget {
   const _IndividualsScreen();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(title: 'Individuals', showBackButton: true),
+      appBar: Header(
+        title: AppLocalizations.of(context).individuals,
+        showBackButton: true,
+      ),
       body: const IndividualsPage(),
     );
   }
 }
-
-// =============================================================
-// ENTITIES FULL SCREEN
-// =============================================================
 
 class _EntitiesScreen extends StatelessWidget {
   const _EntitiesScreen();
@@ -139,7 +155,10 @@ class _EntitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(title: 'Entities', showBackButton: true),
+      appBar: Header(
+        title: AppLocalizations.of(context).entities,
+        showBackButton: true,
+      ),
       body: const EntitiesPage(),
     );
   }

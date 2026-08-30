@@ -1,9 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../models.dart';
 import '../../services/sanctions_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_state.dart';
+import '../../widgets/loading_state.dart';
+import '../../widgets/sanctions_list_row.dart';
+import '../../widgets/sanctions_list_shell.dart';
+import '../../widgets/search_field.dart';
 import 'un_person_details_page.dart';
 
 class IndividualsPage extends StatefulWidget {
@@ -15,43 +22,35 @@ class IndividualsPage extends StatefulWidget {
 
 class _IndividualsPageState extends State<IndividualsPage> {
   final SanctionsService _service = SanctionsService();
-
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   List<Individual> _allIndividuals = [];
   List<Individual> _filteredIndividuals = [];
 
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   String? _errorMessage;
 
   int _totalRecords = 0;
-
-  final ScrollController _scrollController = ScrollController();
+  int _currentOffset = 0;
 
   static const int _pageSize = 50;
-
-  int _currentOffset = 0;
-  bool _isLoadingMore = false;
-  bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
-
-    debugPrint('');
-    debugPrint('========================================');
-    debugPrint('📄 [SANCTIONS PAGE] initState called');
-    debugPrint('📄 [SANCTIONS PAGE] Starting API loading');
-    debugPrint('========================================');
     _scrollController.addListener(_onScroll);
-
     _loadIndividuals(refresh: true);
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (!_scrollController.hasClients) {
+      return;
+    }
 
-    final position = _scrollController.position;
+    final ScrollPosition position = _scrollController.position;
 
     if (position.pixels >= position.maxScrollExtent - 250) {
       _loadMoreIndividuals();
@@ -59,16 +58,14 @@ class _IndividualsPageState extends State<IndividualsPage> {
   }
 
   Future<void> _loadIndividuals({bool refresh = false}) async {
-    if (refresh) {
-      if (mounted) {
-        setState(() {
-          _isLoading = true;
-          _isLoadingMore = false;
-          _errorMessage = null;
-          _currentOffset = 0;
-          _hasMore = true;
-        });
-      }
+    if (refresh && mounted) {
+      setState(() {
+        _isLoading = true;
+        _isLoadingMore = false;
+        _errorMessage = null;
+        _currentOffset = 0;
+        _hasMore = true;
+      });
     }
 
     try {
@@ -82,7 +79,9 @@ class _IndividualsPageState extends State<IndividualsPage> {
         language: 'ARAB',
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         if (refresh) {
@@ -91,34 +90,23 @@ class _IndividualsPageState extends State<IndividualsPage> {
           _allIndividuals.addAll(response.individuals);
         }
 
-        _filteredIndividuals = List<Individual>.from(_allIndividuals);
-
         _totalRecords = response.totalRecords;
-
         _currentOffset = _allIndividuals.length;
-
         _hasMore =
             response.individuals.isNotEmpty &&
             _allIndividuals.length < response.totalRecords;
-
         _isLoading = false;
         _isLoadingMore = false;
       });
 
-      if (_searchController.text.trim().isNotEmpty) {
-        _search(_searchController.text);
-      }
-
-      debugPrint('✅ [INDIVIDUALS] Loaded ${response.individuals.length}');
-
-      debugPrint('✅ [INDIVIDUALS] Current total: ${_allIndividuals.length}');
-
-      debugPrint('✅ [INDIVIDUALS] Has more: $_hasMore');
+      _applySearch();
     } catch (error, stackTrace) {
       debugPrint('❌ [INDIVIDUALS] Error: $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _errorMessage = error.toString();
@@ -133,8 +121,6 @@ class _IndividualsPageState extends State<IndividualsPage> {
       return;
     }
 
-    debugPrint('⬇️ [INDIVIDUALS] Loading more from offset $_currentOffset');
-
     setState(() {
       _isLoadingMore = true;
     });
@@ -142,177 +128,133 @@ class _IndividualsPageState extends State<IndividualsPage> {
     await _loadIndividuals();
   }
 
-  void _search(String value) {
-    final String query = value.trim().toLowerCase();
+  void _applySearch() {
+    final String query = _searchController.text.trim().toLowerCase();
 
-    debugPrint('🔎 [SANCTIONS PAGE] Search query: "$query"');
-
-    setState(() {
+    final List<Individual> results = _allIndividuals.where((individual) {
       if (query.isEmpty) {
-        _filteredIndividuals = List<Individual>.from(_allIndividuals);
-
-        debugPrint(
-          '🔎 [SANCTIONS PAGE] Search cleared. '
-          'Showing ${_filteredIndividuals.length}',
-        );
-
-        return;
+        return true;
       }
 
-      _filteredIndividuals = _allIndividuals.where((individual) {
-        final String aliases = individual.aliases
-            .map((alias) => alias.name)
-            .join(' ')
-            .toLowerCase();
+      final String aliases = individual.aliases
+          .map((alias) => alias.name)
+          .join(' ')
+          .toLowerCase();
 
-        final String designations = individual.designations
-            .join(' ')
-            .toLowerCase();
+      final String designations = individual.designations.join(' ').toLowerCase();
 
-        return individual.dataId.toString().contains(query) ||
-            individual.fullName.toLowerCase().contains(query) ||
-            individual.referenceNumber.toLowerCase().contains(query) ||
-            individual.unListType.toLowerCase().contains(query) ||
-            individual.nationality.toLowerCase().contains(query) ||
-            aliases.contains(query) ||
-            designations.contains(query);
-      }).toList();
+      return individual.dataId.toString().contains(query) ||
+          individual.fullName.toLowerCase().contains(query) ||
+          individual.originalScriptName.toLowerCase().contains(query) ||
+          individual.referenceNumber.toLowerCase().contains(query) ||
+          individual.unListType.toLowerCase().contains(query) ||
+          individual.nationality.toLowerCase().contains(query) ||
+          aliases.contains(query) ||
+          designations.contains(query);
+    }).toList();
 
-      debugPrint(
-        '🔎 [SANCTIONS PAGE] '
-        'Matching results: ${_filteredIndividuals.length}',
-      );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _filteredIndividuals = results;
     });
+  }
+
+  String? _resultCountLabel(AppLocalizations l10n) {
+    if (_isLoading || _errorMessage != null) {
+      return null;
+    }
+
+    if (_searchController.text.trim().isEmpty) {
+      return l10n.showingCount(_allIndividuals.length, _totalRecords);
+    }
+
+    return l10n.matchesCount(
+      _filteredIndividuals.length,
+      _allIndividuals.length,
+      _totalRecords,
+    );
+  }
+
+  void _openDetails(Individual individual) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonDetailsPage(
+          dataId: individual.dataId,
+          initialIndividual: individual,
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    debugPrint('📄 [SANCTIONS PAGE] dispose called');
-
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-      '🏗️ [SANCTIONS PAGE] build called '
-      '| loading=$_isLoading '
-      '| error=$_errorMessage '
-      '| records=${_filteredIndividuals.length}',
-    );
+    final AppLocalizations l10n = AppLocalizations.of(context);
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              _search(value);
-            },
-            decoration: InputDecoration(
-              hintText: 'Search by ID, name or reference number',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      onPressed: () {
-                        debugPrint(
-                          '🧹 [SANCTIONS PAGE] '
-                          'Clear search pressed',
-                        );
-
-                        _searchController.clear();
-                        _search('');
-                      },
-                      icon: const Icon(Icons.close),
-                    )
-                  : null,
-            ),
-          ),
-        ),
-        if (!_isLoading && _errorMessage == null)
-          Expanded(child: _buildContent()),
-      ],
+    return SanctionsListShell(
+      search: SearchField(
+        controller: _searchController,
+        hintText: l10n.searchByNameIdReference,
+        onChanged: (_) => _applySearch(),
+        onClear: () {
+          _searchController.clear();
+          _applySearch();
+        },
+        resultCountLabel: _resultCountLabel(l10n),
+      ),
+      body: _buildContent(l10n),
     );
   }
 
-  Widget _buildContent() {
-    debugPrint(
-      '🧱 [SANCTIONS PAGE] _buildContent '
-      '| loading=$_isLoading '
-      '| error=$_errorMessage',
-    );
+  Widget _buildContent([AppLocalizations? localizations]) {
+    final AppLocalizations l10n =
+        localizations ?? AppLocalizations.of(context);
 
     if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 14),
-            Text('Loading individuals...'),
-          ],
-        ),
-      );
+      return LoadingState(message: l10n.loadingIndividuals);
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 54, color: Colors.red),
-              const SizedBox(height: 12),
-              const Text(
-                'Unable to load individuals',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              SelectableText(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: () {
-                  debugPrint('🔁 [SANCTIONS PAGE] Try Again pressed');
-
-                  _loadIndividuals();
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
+      return ErrorState(
+        title: l10n.unableToLoadIndividuals,
+        onRetry: () => _loadIndividuals(refresh: true),
       );
     }
 
     if (_filteredIndividuals.isEmpty) {
+      final bool searching = _searchController.text.trim().isNotEmpty;
+
       return RefreshIndicator(
-        onRefresh: _loadIndividuals,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 160),
-            Icon(
-              Icons.person_search_outlined,
-              size: 52,
-              color: AppColors.textSecondary,
-            ),
-            SizedBox(height: 12),
-            Center(child: Text('No matching individuals found.')),
-          ],
+        onRefresh: () => _loadIndividuals(refresh: true),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: constraints.maxHeight,
+                  child: EmptyState(
+                    icon: Icons.person_search_outlined,
+                    title: l10n.noResultsFound,
+                    message: searching
+                        ? l10n.noMatchesLoaded
+                        : l10n.noIndividualsAvailable,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       );
     }
@@ -322,62 +264,41 @@ class _IndividualsPageState extends State<IndividualsPage> {
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.xs,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
         itemCount: _filteredIndividuals.length + (_isLoadingMore ? 1 : 0),
-        separatorBuilder: (_, __) {
-          return const SizedBox(height: 10);
-        },
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           if (index == _filteredIndividuals.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
           final Individual individual = _filteredIndividuals[index];
+          final names = DisplayNames.resolve(
+            fallback: l10n.unnamedIndividual,
+            first: individual.originalScriptName,
+            second: individual.fullName,
+          );
 
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                child: const Icon(
-                  Icons.person_outline,
-                  color: AppColors.primary,
-                ),
-              ),
-              title: Text(
-                individual.fullName.isEmpty
-                    ? 'Unnamed individual'
-                    : individual.fullName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 7),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (individual.referenceNumber.isNotEmpty)
-                      Text('Reference: ${individual.referenceNumber}'),
-                    if (individual.unListType.isNotEmpty)
-                      Text('List: ${individual.unListType}'),
-                  ],
-                ),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PersonDetailsPage(
-                      dataId: individual.dataId,
-                      initialIndividual: individual,
-                    ),
-                  ),
-                );
-              },
-            ),
+          return SanctionsListRow(
+            leadingIcon: Icons.person_outline,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: individual.referenceNumber.isEmpty
+                ? null
+                : individual.referenceNumber,
+            chips: [
+              individual.unListType,
+              individual.nationality,
+            ],
+            onTap: () => _openDetails(individual),
           );
         },
       ),

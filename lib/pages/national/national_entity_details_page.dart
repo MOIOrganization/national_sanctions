@@ -1,237 +1,282 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/detail_fields.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/details_section.dart';
 import '../../widgets/header.dart';
+import '../../widgets/record_profile_card.dart';
 
 class NationalEntityDetailsPage extends StatelessWidget {
   final Map<String, dynamic> entity;
 
   const NationalEntityDetailsPage({super.key, required this.entity});
 
+  static const Set<String> _handledKeys = {
+    'ID',
+    'LS',
+    'ENTITY_NAME_IN_ARABIC',
+    'ENTITY_NAME_IN_ENGLISH',
+    'RECORDED_NAME',
+    'NICKNAME_OR_ALIAS',
+    'ALIAS',
+    'ALIASES',
+    'ALSO_KNOWN_AS',
+    'ENTITY_TYPE',
+    'LEGAL_STATUS',
+    'ENTITY_DESCRIPTION',
+    'LEADERSHIP',
+    'ACTIVITY',
+    'PRIORITY_LEVEL',
+    'REASONING',
+    'NOTES',
+    'REQUEST_DATE',
+    'CLASSIFICATION_DATE',
+    'SOURCE_LISTING_DATE',
+    'SENTESCE_DATE',
+    'SENTENCE_DATE',
+    'CREATED',
+    'UPDATED',
+  };
+
   @override
   Widget build(BuildContext context) {
-    final String arabicName = _text(entity['ENTITY_NAME_IN_ARABIC']);
-
-    final String englishName = _text(entity['ENTITY_NAME_IN_ENGLISH']);
-
-    final String displayName = arabicName.isNotEmpty ? arabicName : englishName;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String arabicName = DetailFields.text(
+      entity['ENTITY_NAME_IN_ARABIC'],
+    );
+    final String englishName = DetailFields.text(
+      entity['ENTITY_NAME_IN_ENGLISH'],
+    );
+    final names = DisplayNames.resolve(
+      fallback: l10n.unnamedEntity,
+      first: arabicName,
+      second: englishName.isNotEmpty
+          ? englishName
+          : DetailFields.text(entity['RECORDED_NAME']),
+    );
 
     return Scaffold(
-      appBar: const Header(
-        title: 'National Entity Details',
-        showBackButton: true,
-      ),
+      appBar: Header(title: l10n.nationalEntityDetails, showBackButton: true),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.page),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 38,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                    child: const Icon(
-                      Icons.business,
-                      size: 40,
-                      color: AppColors.primary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  Text(
-                    displayName.isEmpty ? 'Unnamed entity' : displayName,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  if (englishName.isNotEmpty && englishName != displayName) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      englishName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          RecordProfileCard(
+            icon: Icons.business,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: DetailFields.text(entity['ID']),
           ),
-
-          _Section(
-            title: 'Basic Information',
+          DetailsSectionBlock(
+            title: l10n.identity,
             icon: Icons.business_outlined,
-            children: [
-              _Row(label: 'ID', value: _text(entity['ID'])),
-              _Row(label: 'List Serial', value: _text(entity['LS'])),
-              _Row(
-                label: 'Arabic Name',
-                value: _text(entity['ENTITY_NAME_IN_ARABIC']),
+            rows: [
+              DetailRow(label: l10n.arabicName, value: arabicName),
+              DetailRow(label: l10n.englishName, value: englishName),
+              DetailRow(
+                label: l10n.recordedName,
+                value: DetailFields.text(entity['RECORDED_NAME']),
               ),
-              _Row(
-                label: 'English Name',
-                value: _text(entity['ENTITY_NAME_IN_ENGLISH']),
+              DetailRow(label: l10n.id, value: DetailFields.text(entity['ID'])),
+              DetailRow(
+                label: l10n.listSerial,
+                value: DetailFields.text(entity['LS']),
               ),
-              _Row(
-                label: 'Recorded Name',
-                value: _text(entity['RECORDED_NAME']),
+              DetailRow(
+                label: l10n.entityType,
+                value: DetailFields.text(entity['ENTITY_TYPE']),
               ),
-              _Row(
-                label: 'Nickname / Alias',
-                value: _text(entity['NICKNAME_OR_ALIAS']),
+              DetailRow(
+                label: l10n.legalStatus,
+                value: DetailFields.text(entity['LEGAL_STATUS']),
               ),
-              _Row(label: 'Entity Type', value: _text(entity['ENTITY_TYPE'])),
-              _Row(label: 'Legal Status', value: _text(entity['LEGAL_STATUS'])),
             ],
           ),
-
-          _Section(
-            title: 'Entity Information',
+          DetailsSectionBlock(
+            title: l10n.aliases,
+            icon: Icons.people_outline,
+            rows: [
+              DetailRow(
+                label: l10n.nicknameAlias,
+                value: DetailFields.text(entity['NICKNAME_OR_ALIAS']),
+              ),
+              DetailRow(
+                label: l10n.alias,
+                value: DetailFields.text(entity['ALIAS']),
+              ),
+              DetailRow(
+                label: l10n.alsoKnownAs,
+                value: DetailFields.text(entity['ALSO_KNOWN_AS']),
+              ),
+              ..._aliasRows(entity['ALIASES'], l10n),
+            ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.listingInformation,
             icon: Icons.info_outline,
-            children: [
-              _Row(
-                label: 'Description',
-                value: _text(entity['ENTITY_DESCRIPTION']),
+            rows: [
+              DetailRow(
+                label: l10n.description,
+                value: DetailFields.text(entity['ENTITY_DESCRIPTION']),
               ),
-              _Row(label: 'Leadership', value: _text(entity['LEADERSHIP'])),
-              _Row(label: 'Activity', value: _text(entity['ACTIVITY'])),
-              _Row(
-                label: 'Priority Level',
-                value: _text(entity['PRIORITY_LEVEL']),
+              DetailRow(
+                label: l10n.leadership,
+                value: DetailFields.text(entity['LEADERSHIP']),
               ),
-              _Row(label: 'Reasoning', value: _text(entity['REASONING'])),
-              _Row(label: 'Notes', value: _text(entity['NOTES'])),
+              DetailRow(
+                label: l10n.activity,
+                value: DetailFields.text(entity['ACTIVITY']),
+              ),
+              DetailRow(
+                label: l10n.priorityLevel,
+                value: DetailFields.text(entity['PRIORITY_LEVEL']),
+              ),
+              DetailRow(
+                label: l10n.reasoning,
+                value: DetailFields.text(entity['REASONING']),
+              ),
+              DetailRow(
+                label: l10n.notes,
+                value: DetailFields.text(entity['NOTES']),
+              ),
             ],
           ),
-
-          _Section(
-            title: 'Dates',
+          DetailsSectionBlock(
+            title: l10n.dates,
             icon: Icons.calendar_month_outlined,
-            children: [
-              _Row(label: 'Request Date', value: _date(entity['REQUEST_DATE'])),
-              _Row(
-                label: 'Classification Date',
-                value: _date(entity['CLASSIFICATION_DATE']),
+            rows: [
+              DetailRow(
+                label: l10n.requestDate,
+                value: DetailFields.date(entity['REQUEST_DATE']),
               ),
-              _Row(
-                label: 'Source Listing Date',
-                value: _date(entity['SOURCE_LISTING_DATE']),
+              DetailRow(
+                label: l10n.classificationDate,
+                value: DetailFields.date(entity['CLASSIFICATION_DATE']),
               ),
-              _Row(
-                label: 'Sentence Date',
-                value: _date(entity['SENTESCE_DATE']),
+              DetailRow(
+                label: l10n.sourceListingDate,
+                value: DetailFields.date(entity['SOURCE_LISTING_DATE']),
               ),
-              _Row(label: 'Created', value: _date(entity['CREATED'])),
-              _Row(label: 'Updated', value: _date(entity['UPDATED'])),
+              DetailRow(
+                label: l10n.sentenceDate,
+                value: DetailFields.date(
+                  DetailFields.text(entity['SENTENCE_DATE']).isNotEmpty
+                      ? entity['SENTENCE_DATE']
+                      : entity['SENTESCE_DATE'],
+                ),
+              ),
+              DetailRow(
+                label: l10n.created,
+                value: DetailFields.date(entity['CREATED']),
+              ),
+              DetailRow(
+                label: l10n.updated,
+                value: DetailFields.date(entity['UPDATED']),
+              ),
             ],
+          ),
+          DetailsSectionBlock(
+            title: l10n.additionalInformation,
+            icon: Icons.more_horiz,
+            rows: _additionalRows(),
           ),
         ],
       ),
     );
   }
 
-  static String _text(dynamic value) {
-    return value?.toString().trim() ?? '';
-  }
-
-  static String _date(dynamic value) {
-    final String text = _text(value);
-
-    if (text.isEmpty) return '';
-
-    final DateTime? date = DateTime.tryParse(text);
-
-    if (date == null) return text;
-
-    final day = date.day.toString().padLeft(2, '0');
-
-    final month = date.month.toString().padLeft(2, '0');
-
-    return '$day/$month/${date.year}';
-  }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-
-  const _Section({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: AppColors.primary),
-                  const SizedBox(width: 10),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ...children,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _Row({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    if (value.isEmpty || value.toLowerCase() == 'null') {
-      return const SizedBox.shrink();
+  List<Widget> _aliasRows(dynamic rawAliases, AppLocalizations l10n) {
+    if (rawAliases is! List || rawAliases.isEmpty) {
+      return const [];
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 145,
-            child: Text(
-              label,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          Expanded(
-            child: SelectableText(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.45),
-            ),
-          ),
-        ],
-      ),
-    );
+    final List<Widget> rows = [];
+
+    for (int index = 0; index < rawAliases.length; index++) {
+      final dynamic item = rawAliases[index];
+
+      if (item is Map) {
+        final String name = [
+          DetailFields.text(item['ALIAS_NAME']),
+          DetailFields.text(item['NAME']),
+          DetailFields.text(item['NICKNAME']),
+          DetailFields.text(item['VALUE']),
+        ].firstWhere((value) => value.isNotEmpty, orElse: () => '');
+
+        if (name.isNotEmpty) {
+          rows.add(DetailRow(label: l10n.aliasN(index + 1), value: name));
+        }
+        continue;
+      }
+
+      final String text = DetailFields.text(item);
+
+      if (text.isNotEmpty) {
+        rows.add(DetailRow(label: l10n.aliasN(index + 1), value: text));
+      }
+    }
+
+    return rows;
+  }
+
+  List<Widget> _additionalRows() {
+    final List<Widget> rows = [];
+
+    for (final MapEntry<String, dynamic> entry in entity.entries) {
+      if (_handledKeys.contains(entry.key) ||
+          DetailFields.sequenceKeys.contains(entry.key)) {
+        continue;
+      }
+
+      final String value = _formatUnknown(entry.value);
+
+      if (value.isEmpty) {
+        continue;
+      }
+
+      rows.add(
+        DetailRow(label: DetailFields.humanizeKey(entry.key), value: value),
+      );
+    }
+
+    return rows;
+  }
+
+  static String _formatUnknown(dynamic value) {
+    if (value == null) {
+      return '';
+    }
+
+    if (value is List) {
+      final List<String> parts = value
+          .map(_formatUnknown)
+          .where((item) => item.isNotEmpty)
+          .toList();
+
+      return parts.join('\n');
+    }
+
+    if (value is Map) {
+      final List<String> parts = [];
+
+      for (final MapEntry<dynamic, dynamic> entry in value.entries) {
+        if (DetailFields.sequenceKeys.contains(entry.key.toString())) {
+          continue;
+        }
+
+        final String nested = _formatUnknown(entry.value);
+
+        if (nested.isEmpty) {
+          continue;
+        }
+
+        parts.add('${DetailFields.humanizeKey(entry.key.toString())}: $nested');
+      }
+
+      return parts.join('\n');
+    }
+
+    return DetailFields.date(value);
   }
 }

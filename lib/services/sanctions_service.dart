@@ -137,6 +137,13 @@ class SanctionsService {
       },
     );
 
+    print('');
+    print('==============================================');
+    print('[LOGIN] mob_un_login response:');
+    print(const JsonEncoder.withIndent('  ').convert(responseJson));
+    print('==============================================');
+    print('');
+
     if (_isLoginFailure(responseJson)) {
       throw SanctionsApiException(
         message: _loginErrorMessage(responseJson),

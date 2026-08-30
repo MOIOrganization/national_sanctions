@@ -1,8 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_state.dart';
+import '../../widgets/loading_state.dart';
+import '../../widgets/sanctions_list_row.dart';
+import '../../widgets/sanctions_list_shell.dart';
+import '../../widgets/search_field.dart';
 import 'un_entity_details_page.dart';
 
 class EntitiesPage extends StatefulWidget {
@@ -14,9 +21,7 @@ class EntitiesPage extends StatefulWidget {
 
 class _EntitiesPageState extends State<EntitiesPage> {
   final SanctionsService _service = SanctionsService();
-
   final TextEditingController _searchController = TextEditingController();
-
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _allEntities = [];
@@ -30,26 +35,14 @@ class _EntitiesPageState extends State<EntitiesPage> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-
-    debugPrint('');
-    debugPrint('========================================');
-    debugPrint('🏢 [ENTITIES PAGE] initState');
-    debugPrint('========================================');
-
     _scrollController.addListener(_onScroll);
-
     _loadEntities(refresh: true);
   }
-
-  // ============================================================
-  // DETECT WHEN USER REACHES THE BOTTOM
-  // ============================================================
 
   void _onScroll() {
     if (!_scrollController.hasClients) {
@@ -63,29 +56,18 @@ class _EntitiesPageState extends State<EntitiesPage> {
     }
   }
 
-  // ============================================================
-  // LOAD ENTITIES
-  // ============================================================
-
   Future<void> _loadEntities({bool refresh = false}) async {
     if (refresh && mounted) {
       setState(() {
         _isLoading = true;
         _isLoadingMore = false;
         _errorMessage = null;
-
         _currentOffset = 0;
         _hasMore = true;
       });
     }
 
     try {
-      debugPrint('');
-      debugPrint(
-        '🔄 [ENTITIES] Loading '
-        'offset=$_currentOffset limit=$_pageSize',
-      );
-
       final Map<String, dynamic> response = await _service.getAllEntities(
         offset: _currentOffset,
         limit: _pageSize,
@@ -94,16 +76,12 @@ class _EntitiesPageState extends State<EntitiesPage> {
 
       final dynamic rawData = response['DATA'];
 
-      final List<Map<String, dynamic>> newEntities;
-
-      if (rawData is List) {
-        newEntities = rawData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      } else {
-        newEntities = [];
-      }
+      final List<Map<String, dynamic>> newEntities = rawData is List
+          ? rawData
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
+          : [];
 
       final int totalRecords = _toInt(response['total_records']);
 
@@ -119,38 +97,15 @@ class _EntitiesPageState extends State<EntitiesPage> {
         }
 
         _totalRecords = totalRecords;
-
         _currentOffset = _allEntities.length;
-
         _hasMore = newEntities.isNotEmpty && _allEntities.length < totalRecords;
-
         _isLoading = false;
         _isLoadingMore = false;
       });
 
-      // Reapply search after new data is loaded.
       _applySearch();
-
-      debugPrint(
-        '✅ [ENTITIES] Loaded now: '
-        '${newEntities.length}',
-      );
-
-      debugPrint(
-        '✅ [ENTITIES] Current loaded total: '
-        '${_allEntities.length}',
-      );
-
-      debugPrint(
-        '✅ [ENTITIES] Server total: '
-        '$_totalRecords',
-      );
-
-      debugPrint('✅ [ENTITIES] Has more: $_hasMore');
     } catch (error, stackTrace) {
-      debugPrint('');
       debugPrint('❌ [ENTITIES PAGE] Error: $error');
-
       debugPrintStack(stackTrace: stackTrace);
 
       if (!mounted) {
@@ -165,19 +120,10 @@ class _EntitiesPageState extends State<EntitiesPage> {
     }
   }
 
-  // ============================================================
-  // LOAD NEXT PAGE
-  // ============================================================
-
   Future<void> _loadMoreEntities() async {
     if (_isLoading || _isLoadingMore || !_hasMore || _errorMessage != null) {
       return;
     }
-
-    debugPrint(
-      '⬇️ [ENTITIES] Loading more '
-      'from offset $_currentOffset',
-    );
 
     setState(() {
       _isLoadingMore = true;
@@ -186,44 +132,22 @@ class _EntitiesPageState extends State<EntitiesPage> {
     await _loadEntities();
   }
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
-  void _search(String value) {
-    debugPrint('🔎 [ENTITIES] Search: "$value"');
-
-    _applySearch();
-  }
-
   void _applySearch() {
     final String query = _searchController.text.trim().toLowerCase();
 
     final List<Map<String, dynamic>> results = _allEntities.where((entity) {
-      final String dataId = _text(entity['DATAID']).toLowerCase();
+      if (query.isEmpty) {
+        return true;
+      }
 
-      final String name = _text(entity['FIRST_NAME']).toLowerCase();
-
-      final String referenceNumber = _text(
-        entity['REFERENCE_NUMBER'],
-      ).toLowerCase();
-
-      final String listType = _text(entity['UN_LIST_TYPE']).toLowerCase();
-
-      final String comments = _text(entity['COMMENTS1']).toLowerCase();
-
-      final String aliases = _entityAliases(entity).toLowerCase();
-
-      final String addresses = _entityAddresses(entity).toLowerCase();
-
-      return query.isEmpty ||
-          dataId.contains(query) ||
-          name.contains(query) ||
-          referenceNumber.contains(query) ||
-          listType.contains(query) ||
-          comments.contains(query) ||
-          aliases.contains(query) ||
-          addresses.contains(query);
+      return _text(entity['DATAID']).toLowerCase().contains(query) ||
+          _text(entity['FIRST_NAME']).toLowerCase().contains(query) ||
+          _text(entity['NAME_ORIGINAL_SCRIPT']).toLowerCase().contains(query) ||
+          _text(entity['REFERENCE_NUMBER']).toLowerCase().contains(query) ||
+          _text(entity['UN_LIST_TYPE']).toLowerCase().contains(query) ||
+          _text(entity['COMMENTS1']).toLowerCase().contains(query) ||
+          _entityAliases(entity).toLowerCase().contains(query) ||
+          _entityAddresses(entity).toLowerCase().contains(query);
     }).toList();
 
     if (!mounted) {
@@ -233,32 +157,35 @@ class _EntitiesPageState extends State<EntitiesPage> {
     setState(() {
       _filteredEntities = results;
     });
-
-    debugPrint(
-      '🔎 [ENTITIES] Matching results: '
-      '${results.length}',
-    );
   }
 
-  // ============================================================
-  // OPEN DETAILS
-  // ============================================================
+  String? _resultCountLabel(AppLocalizations l10n) {
+    if (_isLoading || _errorMessage != null) {
+      return null;
+    }
+
+    if (_searchController.text.trim().isEmpty) {
+      return l10n.showingCount(_allEntities.length, _totalRecords);
+    }
+
+    return l10n.matchesCount(
+      _filteredEntities.length,
+      _allEntities.length,
+      _totalRecords,
+    );
+  }
 
   void _openEntityDetails(Map<String, dynamic> entity) {
     final int dataId = _toInt(entity['DATAID']);
 
     if (dataId == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This entity does not have a valid data ID.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).invalidRecordId),
         ),
       );
-
       return;
     }
-
-    debugPrint('');
-    debugPrint('👆 [ENTITIES] Opening entity ID: $dataId');
 
     Navigator.push(
       context,
@@ -269,231 +196,143 @@ class _EntitiesPageState extends State<EntitiesPage> {
     );
   }
 
-  // ============================================================
-  // DISPOSE
-  // ============================================================
+  String? _entityCountry(Map<String, dynamic> entity) {
+    final dynamic addresses = entity['ADDRESSES'];
+
+    if (addresses is! List) {
+      return null;
+    }
+
+    for (final dynamic item in addresses) {
+      if (item is! Map) {
+        continue;
+      }
+
+      final String country = _text(item['COUNTRY']);
+
+      if (country.isNotEmpty) {
+        return country;
+      }
+    }
+
+    return null;
+  }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-
     _searchController.dispose();
-
     super.dispose();
   }
 
-  // ============================================================
-  // PAGE UI
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _search,
-            decoration: InputDecoration(
-              hintText: 'Search by ID, entity or reference number',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        _applySearch();
-                      },
-                      icon: const Icon(Icons.close),
-                    )
-                  : null,
-            ),
-          ),
-        ),
+    final AppLocalizations l10n = AppLocalizations.of(context);
 
-        if (!_isLoading && _errorMessage == null)
-          Expanded(child: _buildContent()),
-      ],
+    return SanctionsListShell(
+      search: SearchField(
+        controller: _searchController,
+        hintText: l10n.searchByNameIdReference,
+        onChanged: (_) => _applySearch(),
+        onClear: () {
+          _searchController.clear();
+          _applySearch();
+        },
+        resultCountLabel: _resultCountLabel(l10n),
+      ),
+      body: _buildContent(l10n),
     );
   }
 
-  // ============================================================
-  // CONTENT
-  // ============================================================
+  Widget _buildContent([AppLocalizations? localizations]) {
+    final AppLocalizations l10n =
+        localizations ?? AppLocalizations.of(context);
 
-  Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 14),
-            Text('Loading entities...'),
-          ],
-        ),
-      );
+      return LoadingState(message: l10n.loadingEntities);
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 54, color: Colors.red),
-              const SizedBox(height: 12),
-              const Text(
-                'Unable to load entities',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              SelectableText(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: () {
-                  _loadEntities(refresh: true);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
+      return ErrorState(
+        title: l10n.unableToLoadEntities,
+        onRetry: () => _loadEntities(refresh: true),
       );
     }
 
     if (_filteredEntities.isEmpty) {
+      final bool searching = _searchController.text.trim().isNotEmpty;
+
       return RefreshIndicator(
-        onRefresh: () {
-          return _loadEntities(refresh: true);
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 160),
-            Icon(
-              Icons.business_outlined,
-              size: 55,
-              color: AppColors.textSecondary,
-            ),
-            SizedBox(height: 12),
-            Center(child: Text('No matching entities found.')),
-          ],
+        onRefresh: () => _loadEntities(refresh: true),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: constraints.maxHeight,
+                  child: EmptyState(
+                    icon: Icons.business_outlined,
+                    title: l10n.noResultsFound,
+                    message: searching
+                        ? l10n.noMatchesLoaded
+                        : l10n.noEntitiesAvailable,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () {
-        return _loadEntities(refresh: true);
-      },
+      onRefresh: () => _loadEntities(refresh: true),
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-
-        // Add one extra item while loading more.
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.xs,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
         itemCount: _filteredEntities.length + (_isLoadingMore ? 1 : 0),
-
-        separatorBuilder: (_, __) {
-          return const SizedBox(height: 10);
-        },
-
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
-          // Bottom loading indicator.
           if (index == _filteredEntities.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
           final Map<String, dynamic> entity = _filteredEntities[index];
+          final names = DisplayNames.resolve(
+            fallback: l10n.unnamedEntity,
+            first: _text(entity['NAME_ORIGINAL_SCRIPT']),
+            second: _text(entity['FIRST_NAME']),
+          );
+          final String? country = _entityCountry(entity);
 
-          final String name = _text(entity['FIRST_NAME']);
-
-          final String referenceNumber = _text(entity['REFERENCE_NUMBER']);
-
-          final String listType = _text(entity['UN_LIST_TYPE']);
-
-          final int dataId = _toInt(entity['DATAID']);
-
-          final int aliasesCount = _listLength(entity['ALIASES']);
-
-          final int addressesCount = _listLength(entity['ADDRESSES']);
-
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                child: const Icon(
-                  Icons.business_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
-
-              title: Text(
-                name.isEmpty ? 'Unnamed entity' : name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 7),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (dataId != 0) Text('ID: $dataId'),
-
-                    if (referenceNumber.isNotEmpty)
-                      Text(
-                        'Reference: '
-                        '$referenceNumber',
-                      ),
-
-                    if (listType.isNotEmpty) Text('List: $listType'),
-
-                    if (aliasesCount > 0)
-                      Text(
-                        'Aliases: '
-                        '$aliasesCount',
-                      ),
-
-                    if (addressesCount > 0)
-                      Text(
-                        'Addresses: '
-                        '$addressesCount',
-                      ),
-                  ],
-                ),
-              ),
-
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
-              onTap: () {
-                _openEntityDetails(entity);
-              },
-            ),
+          return SanctionsListRow(
+            leadingIcon: Icons.business_outlined,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: _text(entity['REFERENCE_NUMBER']).isEmpty
+                ? null
+                : _text(entity['REFERENCE_NUMBER']),
+            chips: [_text(entity['UN_LIST_TYPE'])],
+            metadata: [
+              if (country != null) country,
+            ],
+            onTap: () => _openEntityDetails(entity),
           );
         },
       ),
     );
   }
-
-  // ============================================================
-  // ENTITY HELPERS
-  // ============================================================
 
   String _entityAliases(Map<String, dynamic> entity) {
     final dynamic aliases = entity['ALIASES'];
@@ -527,10 +366,6 @@ class _EntitiesPageState extends State<EntitiesPage> {
           ].where((value) => value.isNotEmpty).join(' ');
         })
         .join(' ');
-  }
-
-  int _listLength(dynamic value) {
-    return value is List ? value.length : 0;
   }
 
   int _toInt(dynamic value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+
+import '../l10n/app_localizations.dart';
 
 class AppNavbar extends StatelessWidget {
   final int currentIndex;
@@ -13,26 +14,27 @@ class AppNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
     return NavigationBar(
       selectedIndex: currentIndex,
       onDestinationSelected: onTap,
-      backgroundColor: Colors.white,
-      indicatorColor: AppColors.primary.withValues(alpha: 0.12),
-      destinations: const [
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      destinations: [
         NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'Home',
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: l10n.home,
         ),
         NavigationDestination(
-          icon: Icon(Icons.public_outlined),
-          selectedIcon: Icon(Icons.public),
-          label: 'United Nations',
+          icon: const Icon(Icons.public_outlined),
+          selectedIcon: const Icon(Icons.public),
+          label: l10n.un,
         ),
         NavigationDestination(
-          icon: Icon(Icons.account_balance_outlined),
-          selectedIcon: Icon(Icons.account_balance),
-          label: 'National',
+          icon: const Icon(Icons.account_balance_outlined),
+          selectedIcon: const Icon(Icons.account_balance),
+          label: l10n.national,
         ),
       ],
     );

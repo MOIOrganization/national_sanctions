@@ -1,9 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../utils/display_names.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_state.dart';
 import '../../widgets/header.dart';
+import '../../widgets/loading_state.dart';
+import '../../widgets/sanctions_list_row.dart';
+import '../../widgets/sanctions_list_shell.dart';
+import '../../widgets/search_field.dart';
 import 'national_entity_details_page.dart';
 
 class NationalEntitiesPage extends StatefulWidget {
@@ -15,9 +22,7 @@ class NationalEntitiesPage extends StatefulWidget {
 
 class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
   final SanctionsService _service = SanctionsService();
-
   final TextEditingController _searchController = TextEditingController();
-
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _allEntities = [];
@@ -31,22 +36,21 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-
     _scrollController.addListener(_onScroll);
-
     _loadEntities(refresh: true);
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
+    if (!_scrollController.hasClients) {
+      return;
+    }
 
-    final position = _scrollController.position;
+    final ScrollPosition position = _scrollController.position;
 
     if (position.pixels >= position.maxScrollExtent - 250) {
       _loadMoreEntities();
@@ -65,11 +69,6 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
     }
 
     try {
-      debugPrint(
-        '🔄 [NATIONAL ENTITIES] '
-        'offset=$_currentOffset limit=$_pageSize',
-      );
-
       final Map<String, dynamic> response = await _service.getNationalEntities(
         offset: _currentOffset,
         limit: _pageSize,
@@ -87,7 +86,9 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
 
       final int totalRecords = _toInt(response['total_records']);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         if (refresh) {
@@ -98,24 +99,19 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
 
         _totalRecords = totalRecords;
         _currentOffset = _allEntities.length;
-
         _hasMore = newEntities.isNotEmpty && _allEntities.length < totalRecords;
-
         _isLoading = false;
         _isLoadingMore = false;
       });
 
       _applySearch();
-
-      debugPrint(
-        '✅ [NATIONAL ENTITIES] '
-        '${_allEntities.length}/$_totalRecords loaded',
-      );
     } catch (error, stackTrace) {
       debugPrint('❌ [NATIONAL ENTITIES] $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _errorMessage = error.toString();
@@ -137,14 +133,14 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
     await _loadEntities();
   }
 
-  void _search(String value) {
-    _applySearch();
-  }
-
   void _applySearch() {
     final String query = _searchController.text.trim().toLowerCase();
 
     final results = _allEntities.where((entity) {
+      if (query.isEmpty) {
+        return true;
+      }
+
       final String searchable = [
         _text(entity['ID']),
         _text(entity['ENTITY_NAME_IN_ARABIC']),
@@ -160,14 +156,32 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
         _text(entity['REASONING']),
       ].join(' ').toLowerCase();
 
-      return query.isEmpty || searchable.contains(query);
+      return searchable.contains(query);
     }).toList();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _filteredEntities = results;
     });
+  }
+
+  String? _resultCountLabel(AppLocalizations l10n) {
+    if (_isLoading || _errorMessage != null) {
+      return null;
+    }
+
+    if (_searchController.text.trim().isEmpty) {
+      return l10n.showingCount(_allEntities.length, _totalRecords);
+    }
+
+    return l10n.matchesCount(
+      _filteredEntities.length,
+      _allEntities.length,
+      _totalRecords,
+    );
   }
 
   void _openDetails(Map<String, dynamic> entity) {
@@ -184,89 +198,71 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: const Header(title: 'National Entities', showBackButton: true),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _search,
-              decoration: InputDecoration(
-                hintText: 'Search by ID, name or recorded name',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        onPressed: () {
-                          _searchController.clear();
-                          _applySearch();
-                        },
-                        icon: const Icon(Icons.close),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-
-          if (!_isLoading && _errorMessage == null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Showing ${_filteredEntities.length} '
-                  'loaded of $_totalRecords entities',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-
-          Expanded(child: _buildContent()),
-        ],
+      appBar: Header(title: l10n.nationalEntitiesTitle, showBackButton: true),
+      body: SanctionsListShell(
+        search: SearchField(
+          controller: _searchController,
+          hintText: l10n.searchByNameIdRecorded,
+          onChanged: (_) => _applySearch(),
+          onClear: () {
+            _searchController.clear();
+            _applySearch();
+          },
+          resultCountLabel: _resultCountLabel(l10n),
+        ),
+        body: _buildContent(l10n),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent([AppLocalizations? localizations]) {
+    final AppLocalizations l10n =
+        localizations ?? AppLocalizations.of(context);
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return LoadingState(message: l10n.loadingEntities);
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 52, color: Colors.red),
-              const SizedBox(height: 12),
-              Text(_errorMessage!, textAlign: TextAlign.center),
-              const SizedBox(height: 18),
-              FilledButton(
-                onPressed: () {
-                  _loadEntities(refresh: true);
-                },
-                child: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
+      return ErrorState(
+        title: l10n.unableToLoadEntities,
+        onRetry: () => _loadEntities(refresh: true),
       );
     }
 
     if (_filteredEntities.isEmpty) {
-      return const Center(child: Text('No matching entities found.'));
+      final bool searching = _searchController.text.trim().isNotEmpty;
+
+      return RefreshIndicator(
+        onRefresh: () => _loadEntities(refresh: true),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: constraints.maxHeight,
+                  child: EmptyState(
+                    icon: Icons.business_outlined,
+                    title: l10n.noResultsFound,
+                    message: searching
+                        ? l10n.noMatchesLoaded
+                        : l10n.noEntitiesAvailable,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
     }
 
     return RefreshIndicator(
@@ -274,72 +270,38 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          AppSpacing.xs,
+          AppSpacing.page,
+          AppSpacing.xl,
+        ),
         itemCount: _filteredEntities.length + (_isLoadingMore ? 1 : 0),
-
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           if (index == _filteredEntities.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
           final entity = _filteredEntities[index];
+          final names = DisplayNames.resolve(
+            fallback: l10n.unnamedEntity,
+            first: _text(entity['ENTITY_NAME_IN_ARABIC']),
+            second: _text(entity['ENTITY_NAME_IN_ENGLISH']).isNotEmpty
+                ? _text(entity['ENTITY_NAME_IN_ENGLISH'])
+                : _text(entity['RECORDED_NAME']),
+          );
 
-          final String arabicName = _text(entity['ENTITY_NAME_IN_ARABIC']);
-
-          final String englishName = _text(entity['ENTITY_NAME_IN_ENGLISH']);
-
-          final String name = arabicName.isNotEmpty ? arabicName : englishName;
-
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                child: const Icon(
-                  Icons.business_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
-
-              title: Text(
-                name.isEmpty ? 'Unnamed entity' : name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 7),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_text(entity['ID']).isNotEmpty)
-                      Text('ID: ${entity['ID']}'),
-
-                    if (_text(entity['RECORDED_NAME']).isNotEmpty)
-                      Text(
-                        'Recorded name: '
-                        '${entity['RECORDED_NAME']}',
-                      ),
-
-                    if (_text(entity['ENTITY_TYPE']).isNotEmpty)
-                      Text(
-                        'Type: '
-                        '${entity['ENTITY_TYPE']}',
-                      ),
-                  ],
-                ),
-              ),
-
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
-              onTap: () => _openDetails(entity),
-            ),
+          return SanctionsListRow(
+            leadingIcon: Icons.business_outlined,
+            primaryName: names.primary,
+            secondaryName: names.secondary,
+            identifier: _text(entity['ID']).isEmpty ? null : _text(entity['ID']),
+            chips: [_text(entity['ENTITY_TYPE'])],
+            onTap: () => _openDetails(entity),
           );
         },
       ),
@@ -347,7 +309,9 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
   }
 
   int _toInt(dynamic value) {
-    if (value is int) return value;
+    if (value is int) {
+      return value;
+    }
 
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
