@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "216778829204",
+    "project_id": "moi-bh-sanctions",
+    "storage_bucket": "moi-bh-sanctions.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216778829204:android:b2501224dbcd895afc7381",
+        "android_client_info": {
+          "package_name": "com.example.sanctions"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEs8syP3EXpFOjdW6msVbnRT8gKM2x2r8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

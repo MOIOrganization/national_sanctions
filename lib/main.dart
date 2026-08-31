@@ -1,5 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
+import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/locale_controller.dart';
 import 'pages/home_page.dart';
@@ -8,12 +11,23 @@ import 'pages/national/national_sanctions_page.dart';
 import 'pages/un/un_entities_page.dart';
 import 'pages/un/un_individuals_page.dart';
 import 'pages/un/un_sanctions_page.dart';
+import 'services/notification_service.dart';
 import 'session/session_controller.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
 import 'widgets/navbar.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  await NotificationService.initialize();
+
   runApp(const NationalSanctionsApp());
 }
 

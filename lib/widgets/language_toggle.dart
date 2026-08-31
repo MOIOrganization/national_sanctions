@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/locale_controller.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 class LanguageToggleButton extends StatelessWidget {
@@ -15,6 +16,12 @@ class LanguageToggleButton extends StatelessWidget {
 
     return TextButton(
       onPressed: localeController.toggle,
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.onPrimary,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        tapTargetSize: MaterialTapTargetSize.padded,
+      ),
       child: Text(
         localeController.isArabic ? l10n.switchToEnglish : l10n.switchToArabic,
         style: AppTextStyles.button.copyWith(color: AppColors.onPrimary),

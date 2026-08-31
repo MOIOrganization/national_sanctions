@@ -227,15 +227,13 @@ class _LoginPageState extends State<LoginPage> {
           SafeArea(
             child: Stack(
               children: [
-                const Align(
-                  alignment: AlignmentDirectional.topEnd,
-                  child: LanguageToggleButton(),
-                ),
                 Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: AppSpacing.xl,
+                    padding: const EdgeInsets.fromLTRB(
+                      22,
+                      48,
+                      22,
+                      AppSpacing.xl,
                     ),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 420),
@@ -570,6 +568,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
+                const Align(
+                  alignment: AlignmentDirectional.topEnd,
+                  child: LanguageToggleButton(),
+                ),
               ],
             ),
           ),
@@ -631,7 +633,11 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
 
+    final double maxContentWidth =
+        (MediaQuery.sizeOf(context).width - 56).clamp(200, 360);
+
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       titlePadding: const EdgeInsets.fromLTRB(22, 22, 12, 0),
       contentPadding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
       actionsPadding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
@@ -649,8 +655,8 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 380,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxContentWidth),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -674,14 +680,20 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
               textAlign: TextAlign.center,
               maxLength: 6,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(
-                fontSize: 24,
+              style: TextStyle(
+                fontSize: maxContentWidth < 280 ? 20 : 24,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 10,
+                letterSpacing: maxContentWidth < 280 ? 4 : 8,
+                height: 1.2,
               ),
               decoration: const InputDecoration(
                 hintText: '------',
                 counterText: '',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
