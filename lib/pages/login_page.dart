@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _cprController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _blockController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   bool _isLoggingIn = false;
   String? _formError;
@@ -145,14 +145,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _completeSignIn(Map<String, dynamic> loginResponse) async {
-    final String phone = _phoneController.text.trim();
+    final String email = _emailController.text.trim();
     final String cpr = _cprController.text.trim();
 
     final bool? verified = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return _OtpVerificationDialog(phone: phone);
+        return _OtpVerificationDialog(email: email);
       },
     );
 
@@ -198,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
     _cprController.dispose();
     _expiryController.dispose();
     _blockController.dispose();
-    _phoneController.dispose();
+    _emailController.dispose();
 
     super.dispose();
   }
@@ -417,15 +417,12 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   const SizedBox(height: AppSpacing.lg),
                                   TextFormField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
                                     textInputAction: TextInputAction.done,
                                     textDirection: TextDirection.ltr,
-                                    maxLength: 8,
+                                    autocorrect: false,
                                     enabled: !_isLoggingIn,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
                                     onFieldSubmitted: (_) => _continue(),
                                     onChanged: (_) {
                                       if (_formError != null) {
@@ -435,37 +432,25 @@ class _LoginPageState extends State<LoginPage> {
                                       }
                                     },
                                     decoration: InputDecoration(
-                                      labelText: l10n.mobileNumber,
-                                      hintText: l10n.enterMobile,
-                                      prefixIcon: const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.phone_outlined),
-                                            SizedBox(width: 7),
-                                            Text(
-                                              '+973',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                      labelText: l10n.email,
+                                      hintText: l10n.enterEmail,
+                                      prefixIcon: const Icon(
+                                        Icons.email_outlined,
                                       ),
-                                      counterText: '',
                                     ),
                                     validator: (value) {
                                       final String text = value?.trim() ?? '';
 
                                       if (text.isEmpty) {
-                                        return l10n.mobileRequired;
+                                        return l10n.emailRequired;
                                       }
 
-                                      if (text.length != 8) {
-                                        return l10n.mobileMustBe8;
+                                      final bool isValid = RegExp(
+                                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                      ).hasMatch(text);
+
+                                      if (!isValid) {
+                                        return l10n.invalidEmail;
                                       }
 
                                       return null;
@@ -582,9 +567,9 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class _OtpVerificationDialog extends StatefulWidget {
-  const _OtpVerificationDialog({required this.phone});
+  const _OtpVerificationDialog({required this.email});
 
-  final String phone;
+  final String email;
 
   @override
   State<_OtpVerificationDialog> createState() =>
@@ -661,13 +646,13 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.sms_outlined,
+              Icons.email_outlined,
               size: 48,
               color: AppColors.primary,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              l10n.enterOtpSentTo(widget.phone),
+              l10n.enterOtpSentTo(widget.email),
               textAlign: TextAlign.center,
               style: AppTextStyles.body.copyWith(color: AppColors.muted),
             ),

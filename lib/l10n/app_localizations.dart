@@ -176,29 +176,29 @@ abstract class AppLocalizations {
   /// **'Please enter your block number'**
   String get blockRequired;
 
-  /// No description provided for @mobileNumber.
+  /// No description provided for @email.
   ///
   /// In en, this message translates to:
-  /// **'Mobile Number'**
-  String get mobileNumber;
+  /// **'Email'**
+  String get email;
 
-  /// No description provided for @enterMobile.
+  /// No description provided for @enterEmail.
   ///
   /// In en, this message translates to:
-  /// **'Enter mobile number'**
-  String get enterMobile;
+  /// **'Enter email address'**
+  String get enterEmail;
 
-  /// No description provided for @mobileRequired.
+  /// No description provided for @emailRequired.
   ///
   /// In en, this message translates to:
-  /// **'Please enter your mobile number'**
-  String get mobileRequired;
+  /// **'Please enter your email address'**
+  String get emailRequired;
 
-  /// No description provided for @mobileMustBe8.
+  /// No description provided for @invalidEmail.
   ///
   /// In en, this message translates to:
-  /// **'Mobile number must be 8 digits'**
-  String get mobileMustBe8;
+  /// **'Please enter a valid email address'**
+  String get invalidEmail;
 
   /// No description provided for @otpVerification.
   ///
@@ -209,8 +209,8 @@ abstract class AppLocalizations {
   /// No description provided for @enterOtpSentTo.
   ///
   /// In en, this message translates to:
-  /// **'Enter the verification code sent to +973 {phone}.'**
-  String enterOtpSentTo(String phone);
+  /// **'Enter the verification code sent to {email}.'**
+  String enterOtpSentTo(String email);
 
   /// No description provided for @resendOtp.
   ///

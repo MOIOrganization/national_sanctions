@@ -48,23 +48,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get blockRequired => 'يرجى إدخال رقم المجمع';
 
   @override
-  String get mobileNumber => 'رقم الهاتف';
+  String get email => 'البريد الإلكتروني';
 
   @override
-  String get enterMobile => 'أدخل رقم الهاتف';
+  String get enterEmail => 'أدخل البريد الإلكتروني';
 
   @override
-  String get mobileRequired => 'يرجى إدخال رقم الهاتف';
+  String get emailRequired => 'يرجى إدخال البريد الإلكتروني';
 
   @override
-  String get mobileMustBe8 => 'يجب أن يتكون رقم الهاتف من 8 أرقام';
+  String get invalidEmail => 'يرجى إدخال بريد إلكتروني صالح';
 
   @override
   String get otpVerification => 'التحقق برمز OTP';
 
   @override
-  String enterOtpSentTo(String phone) {
-    return 'أدخل رمز التحقق المرسل إلى +973 $phone.';
+  String enterOtpSentTo(String email) {
+    return 'أدخل رمز التحقق المرسل إلى $email.';
   }
 
   @override

@@ -28,6 +28,10 @@ class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   static Future<void> initialize() async {
+    if (kIsWeb) {
+      return;
+    }
+
     final NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
