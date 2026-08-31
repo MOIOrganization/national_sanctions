@@ -24,6 +24,20 @@ class HomePage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.page),
       children: [
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final double logoWidth = constraints.maxWidth.clamp(0.0, 160.0);
+
+            return Center(
+              child: Image.asset(
+                'asset/images/home_logo.png',
+                width: logoWidth,
+                fit: BoxFit.contain,
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.xl),
         HubHero(
           icon: Icons.policy_outlined,
           title: l10n.officialLookup,

@@ -35,8 +35,12 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
+        iconTheme: IconThemeData(color: AppColors.onPrimary),
+        actionsIconTheme: IconThemeData(color: AppColors.onPrimary),
         centerTitle: true,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 18,
@@ -136,13 +140,24 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+        backgroundColor: AppColors.primary,
+        indicatorColor: AppColors.onPrimary,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed) ||
+              states.contains(WidgetState.hovered)) {
+            return AppColors.onPrimary.withValues(alpha: 0.08);
+          }
+
+          return null;
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final bool selected = states.contains(WidgetState.selected);
 
           return AppTextStyles.caption.copyWith(
-            color: selected ? AppColors.primary : AppColors.muted,
+            color: AppColors.onPrimary.withValues(alpha: selected ? 1 : 0.72),
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           );
         }),
@@ -150,7 +165,7 @@ class AppTheme {
           final bool selected = states.contains(WidgetState.selected);
 
           return IconThemeData(
-            color: selected ? AppColors.primary : AppColors.muted,
+            color: selected ? AppColors.primary : AppColors.onPrimary,
           );
         }),
       ),

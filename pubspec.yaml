@@ -40,11 +40,11 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "asset/images/logo_nobg.png"
+  image_path: "asset/images/logo.png"
   remove_alpha_ios: true 
 
   web:
     generate: true
-    image_path: "asset/images/logo_nobg.png"
+    image_path: "asset/images/logo.png"
     background_color: "#FFFFFF"
     theme_color: "#0D2748"
