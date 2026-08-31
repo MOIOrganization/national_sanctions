@@ -48,23 +48,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get blockRequired => 'يرجى إدخال رقم المجمع';
 
   @override
-  String get email => 'البريد الإلكتروني';
+  String get mobileNumber => 'رقم الجوال';
 
   @override
-  String get enterEmail => 'أدخل البريد الإلكتروني';
+  String get enterMobile => 'أدخل رقم الجوال';
 
   @override
-  String get emailRequired => 'يرجى إدخال البريد الإلكتروني';
+  String get mobileRequired => 'يرجى إدخال رقم الجوال';
 
   @override
-  String get invalidEmail => 'يرجى إدخال بريد إلكتروني صالح';
+  String get mobileMustBe8 => 'يجب أن يتكون رقم الجوال من 8 أرقام';
 
   @override
   String get otpVerification => 'التحقق برمز OTP';
 
   @override
-  String enterOtpSentTo(String email) {
-    return 'أدخل رمز التحقق المرسل إلى $email.';
+  String enterOtpSentTo(String phone) {
+    return 'أدخل رمز التحقق المرسل إلى +973 $phone.';
   }
 
   @override
@@ -81,6 +81,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get unableToLogin => 'تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get unableToVerifyOtp =>
+      'تعذر التحقق من الرمز. يرجى المحاولة مرة أخرى.';
 
   @override
   String get logOut => 'تسجيل الخروج';
@@ -108,7 +112,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get home => 'الرئيسية';
 
   @override
-  String get un => 'أممي';
+  String get un => 'دولي';
 
   @override
   String get national => 'وطني';

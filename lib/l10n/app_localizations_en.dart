@@ -48,23 +48,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blockRequired => 'Please enter your block number';
 
   @override
-  String get email => 'Email';
+  String get mobileNumber => 'Mobile Number';
 
   @override
-  String get enterEmail => 'Enter email address';
+  String get enterMobile => 'Enter mobile number';
 
   @override
-  String get emailRequired => 'Please enter your email address';
+  String get mobileRequired => 'Please enter your mobile number';
 
   @override
-  String get invalidEmail => 'Please enter a valid email address';
+  String get mobileMustBe8 => 'Mobile number must be 8 digits';
 
   @override
   String get otpVerification => 'OTP Verification';
 
   @override
-  String enterOtpSentTo(String email) {
-    return 'Enter the verification code sent to $email.';
+  String enterOtpSentTo(String phone) {
+    return 'Enter the verification code sent to +973 $phone.';
   }
 
   @override
@@ -81,6 +81,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unableToLogin => 'Unable to login. Please try again.';
+
+  @override
+  String get unableToVerifyOtp =>
+      'Unable to verify the code. Please try again.';
 
   @override
   String get logOut => 'Logout';

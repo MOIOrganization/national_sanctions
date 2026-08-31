@@ -127,6 +127,7 @@ class SanctionsService {
     required String cpr,
     required String blockNo,
     required String expireDate,
+    required String phone,
   }) async {
     final Map<String, dynamic> responseJson = await _postWithSession(
       endpoint: 'mob_un_login',
@@ -135,6 +136,7 @@ class SanctionsService {
         'cpr': cpr,
         'block_no': blockNo,
         'expire_date': expireDate,
+        'mobile_no': phone,
       },
     );
 
@@ -153,6 +155,41 @@ class SanctionsService {
     }
 
     debugPrint('✅ [LOGIN] Login completed successfully');
+
+    return responseJson;
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String userId,
+    required String otp,
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'un_chk_valid_otp',
+      requestName: 'VERIFY OTP',
+      body: {
+        'user_id': userId,
+        'otp': otp,
+      },
+    );
+
+    print('');
+    print('==============================================');
+    print('[OTP] un_chk_valid_otp response:');
+    print(const JsonEncoder.withIndent('  ').convert(responseJson));
+    print('==============================================');
+    print('');
+
+    if (_isLoginFailure(responseJson)) {
+      throw SanctionsApiException(
+        message: _loginErrorMessage(
+          responseJson,
+          fallback: 'The verification code could not be confirmed.',
+        ),
+        responseBody: jsonEncode(responseJson),
+      );
+    }
+
+    debugPrint('✅ [OTP] OTP verified successfully');
 
     return responseJson;
   }
@@ -191,7 +228,10 @@ class SanctionsService {
     return false;
   }
 
-  String _loginErrorMessage(Map<String, dynamic> responseJson) {
+  String _loginErrorMessage(
+    Map<String, dynamic> responseJson, {
+    String fallback = 'Login details could not be verified.',
+  }) {
     final String message = _firstNonEmptyString([
       responseJson['MESSAGE'],
       responseJson['message'],
@@ -203,7 +243,7 @@ class SanctionsService {
       return message;
     }
 
-    return 'Login details could not be verified.';
+    return fallback;
   }
 
   String _firstNonEmptyString(List<dynamic> values) {

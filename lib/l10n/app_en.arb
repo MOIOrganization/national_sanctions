@@ -13,15 +13,15 @@
   "blockNumber": "Block Number",
   "enterBlock": "Enter block number",
   "blockRequired": "Please enter your block number",
-  "email": "Email",
-  "enterEmail": "Enter email address",
-  "emailRequired": "Please enter your email address",
-  "invalidEmail": "Please enter a valid email address",
+  "mobileNumber": "Mobile Number",
+  "enterMobile": "Enter mobile number",
+  "mobileRequired": "Please enter your mobile number",
+  "mobileMustBe8": "Mobile number must be 8 digits",
   "otpVerification": "OTP Verification",
-  "enterOtpSentTo": "Enter the verification code sent to {email}.",
+  "enterOtpSentTo": "Enter the verification code sent to +973 {phone}.",
   "@enterOtpSentTo": {
     "placeholders": {
-      "email": {"type": "String"}
+      "phone": {"type": "String"}
     }
   },
   "resendOtp": "Resend OTP",
@@ -29,6 +29,7 @@
   "enterSixDigitOtp": "Please enter the 6-digit OTP.",
   "verifyAndLogin": "Verify and Login",
   "unableToLogin": "Unable to login. Please try again.",
+  "unableToVerifyOtp": "Unable to verify the code. Please try again.",
   "logOut": "Logout",
   "logOutConfirm": "You will need to sign in again to search sanctions lists.",
   "cancel": "Cancel",

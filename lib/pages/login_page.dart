@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _cprController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _blockController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   bool _isLoggingIn = false;
   String? _formError;
@@ -90,6 +90,7 @@ class _LoginPageState extends State<LoginPage> {
         cpr: _cprController.text.trim(),
         blockNo: _blockController.text.trim(),
         expireDate: _expiryController.text.trim().replaceAll('/', ''),
+        phone: _phoneController.text.trim(),
       );
 
       debugPrint('[LOGIN PAGE] mob_un_login response: $response');
@@ -145,14 +146,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _completeSignIn(Map<String, dynamic> loginResponse) async {
-    final String email = _emailController.text.trim();
+    final String phone = _phoneController.text.trim();
     final String cpr = _cprController.text.trim();
+    final String? userId = SanctionsService.userIdFromLogin(loginResponse);
+
+    debugPrint('[LOGIN PAGE] login user_id: $userId');
+
+    if (userId == null || userId.isEmpty) {
+      setState(() {
+        _formError = AppLocalizations.of(context).unableToLogin;
+      });
+      return;
+    }
 
     final bool? verified = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return _OtpVerificationDialog(email: email);
+        return _OtpVerificationDialog(
+          phone: phone,
+          userId: userId,
+          service: _service,
+        );
       },
     );
 
@@ -160,22 +175,12 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final String? userId = SanctionsService.userIdFromLogin(loginResponse);
     List<AppNotification> notifications = const [];
 
-    debugPrint('[LOGIN PAGE] login user_id: $userId');
-
-    if (userId != null && userId.isNotEmpty) {
-      try {
-        notifications = await _service.getUserNotifications(userId: userId);
-      } catch (error) {
-        debugPrint('[LOGIN PAGE] bl_get_user_notifications error: $error');
-      }
-    } else {
-      debugPrint(
-        '[LOGIN PAGE] login response did not include user_id; '
-        'skipping bl_get_user_notifications',
-      );
+    try {
+      notifications = await _service.getUserNotifications(userId: userId);
+    } catch (error) {
+      debugPrint('[LOGIN PAGE] bl_get_user_notifications error: $error');
     }
 
     if (!mounted) {
@@ -198,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
     _cprController.dispose();
     _expiryController.dispose();
     _blockController.dispose();
-    _emailController.dispose();
+    _phoneController.dispose();
 
     super.dispose();
   }
@@ -417,12 +422,15 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   const SizedBox(height: AppSpacing.lg),
                                   TextFormField(
-                                    controller: _emailController,
-                                    keyboardType: TextInputType.emailAddress,
+                                    controller: _phoneController,
+                                    keyboardType: TextInputType.phone,
                                     textInputAction: TextInputAction.done,
                                     textDirection: TextDirection.ltr,
-                                    autocorrect: false,
                                     enabled: !_isLoggingIn,
+                                    maxLength: 8,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
                                     onFieldSubmitted: (_) => _continue(),
                                     onChanged: (_) {
                                       if (_formError != null) {
@@ -432,25 +440,23 @@ class _LoginPageState extends State<LoginPage> {
                                       }
                                     },
                                     decoration: InputDecoration(
-                                      labelText: l10n.email,
-                                      hintText: l10n.enterEmail,
+                                      labelText: l10n.mobileNumber,
+                                      hintText: l10n.enterMobile,
                                       prefixIcon: const Icon(
-                                        Icons.email_outlined,
+                                        Icons.phone_outlined,
                                       ),
+                                      prefixText: '+973 ',
+                                      counterText: '',
                                     ),
                                     validator: (value) {
                                       final String text = value?.trim() ?? '';
 
                                       if (text.isEmpty) {
-                                        return l10n.emailRequired;
+                                        return l10n.mobileRequired;
                                       }
 
-                                      final bool isValid = RegExp(
-                                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                                      ).hasMatch(text);
-
-                                      if (!isValid) {
-                                        return l10n.invalidEmail;
+                                      if (text.length != 8) {
+                                        return l10n.mobileMustBe8;
                                       }
 
                                       return null;
@@ -567,9 +573,15 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class _OtpVerificationDialog extends StatefulWidget {
-  const _OtpVerificationDialog({required this.email});
+  const _OtpVerificationDialog({
+    required this.phone,
+    required this.userId,
+    required this.service,
+  });
 
-  final String email;
+  final String phone;
+  final String userId;
+  final SanctionsService service;
 
   @override
   State<_OtpVerificationDialog> createState() =>
@@ -605,13 +617,41 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
       _isVerifying = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      await widget.service.verifyOtp(userId: widget.userId, otp: otp);
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pop(context, true);
+    } on SanctionsApiException catch (error) {
+      debugPrint('[OTP] un_chk_valid_otp error: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      debugPrint('[OTP] un_chk_valid_otp unexpected error: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.unableToVerifyOtp)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+        });
+      }
     }
-
-    Navigator.pop(context, true);
   }
 
   @override
@@ -646,13 +686,13 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.email_outlined,
+              Icons.phone_android_outlined,
               size: 48,
               color: AppColors.primary,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              l10n.enterOtpSentTo(widget.email),
+              l10n.enterOtpSentTo(widget.phone),
               textAlign: TextAlign.center,
               style: AppTextStyles.body.copyWith(color: AppColors.muted),
             ),

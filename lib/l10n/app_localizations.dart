@@ -176,29 +176,29 @@ abstract class AppLocalizations {
   /// **'Please enter your block number'**
   String get blockRequired;
 
-  /// No description provided for @email.
+  /// No description provided for @mobileNumber.
   ///
   /// In en, this message translates to:
-  /// **'Email'**
-  String get email;
+  /// **'Mobile Number'**
+  String get mobileNumber;
 
-  /// No description provided for @enterEmail.
+  /// No description provided for @enterMobile.
   ///
   /// In en, this message translates to:
-  /// **'Enter email address'**
-  String get enterEmail;
+  /// **'Enter mobile number'**
+  String get enterMobile;
 
-  /// No description provided for @emailRequired.
+  /// No description provided for @mobileRequired.
   ///
   /// In en, this message translates to:
-  /// **'Please enter your email address'**
-  String get emailRequired;
+  /// **'Please enter your mobile number'**
+  String get mobileRequired;
 
-  /// No description provided for @invalidEmail.
+  /// No description provided for @mobileMustBe8.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a valid email address'**
-  String get invalidEmail;
+  /// **'Mobile number must be 8 digits'**
+  String get mobileMustBe8;
 
   /// No description provided for @otpVerification.
   ///
@@ -209,8 +209,8 @@ abstract class AppLocalizations {
   /// No description provided for @enterOtpSentTo.
   ///
   /// In en, this message translates to:
-  /// **'Enter the verification code sent to {email}.'**
-  String enterOtpSentTo(String email);
+  /// **'Enter the verification code sent to +973 {phone}.'**
+  String enterOtpSentTo(String phone);
 
   /// No description provided for @resendOtp.
   ///
@@ -241,6 +241,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to login. Please try again.'**
   String get unableToLogin;
+
+  /// No description provided for @unableToVerifyOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to verify the code. Please try again.'**
+  String get unableToVerifyOtp;
 
   /// No description provided for @logOut.
   ///
