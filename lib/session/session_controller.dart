@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/app_notification.dart';
 
 class SessionController extends ChangeNotifier {
+  static const Duration idleTimeout = Duration(minutes: 5);
+
   String? _cpr;
   String? _userId;
   bool _biometricEnabled = false;
   List<AppNotification> _notifications = const [];
+  DateTime? _lastActivityAt;
+  Timer? _idleTimer;
 
   String? get cpr => _cpr;
 
@@ -28,6 +34,7 @@ class SessionController extends ChangeNotifier {
     _cpr = cpr.trim();
     _userId = userId?.trim();
     _notifications = List<AppNotification>.unmodifiable(notifications);
+    recordActivity();
     notifyListeners();
   }
 
@@ -57,7 +64,65 @@ class SessionController extends ChangeNotifier {
     return false;
   }
 
+  void recordActivity() {
+    if (!isSignedIn) {
+      return;
+    }
+
+    _lastActivityAt = DateTime.now();
+    _restartIdleTimer();
+  }
+
+  /// Call when the app returns to the foreground. Dart timers are not
+  /// reliable while the process is suspended.
+  void checkIdleTimeout() {
+    if (!isSignedIn) {
+      return;
+    }
+
+    final DateTime? lastActivityAt = _lastActivityAt;
+
+    if (lastActivityAt == null) {
+      recordActivity();
+      return;
+    }
+
+    if (DateTime.now().difference(lastActivityAt) >= idleTimeout) {
+      signOut();
+      return;
+    }
+
+    _restartIdleTimer();
+  }
+
+  void _restartIdleTimer() {
+    _idleTimer?.cancel();
+
+    if (!isSignedIn) {
+      return;
+    }
+
+    final DateTime lastActivityAt = _lastActivityAt ?? DateTime.now();
+    final Duration remaining =
+        idleTimeout - DateTime.now().difference(lastActivityAt);
+
+    if (remaining <= Duration.zero) {
+      signOut();
+      return;
+    }
+
+    _idleTimer = Timer(remaining, () {
+      if (isSignedIn) {
+        signOut();
+      }
+    });
+  }
+
   void signOut() {
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    _lastActivityAt = null;
+
     if (_cpr == null && _userId == null) {
       return;
     }
@@ -66,6 +131,12 @@ class SessionController extends ChangeNotifier {
     _userId = null;
     _notifications = const [];
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _idleTimer?.cancel();
+    super.dispose();
   }
 }
 

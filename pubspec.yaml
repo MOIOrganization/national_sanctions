@@ -40,11 +40,13 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "asset/images/logo.png"
+  image_path: "asset/images/icon.png"
   remove_alpha_ios: true 
-
+  adaptive_icon_background: "#2D2D2D" # Put your desired background hex color here
+  adaptive_icon_foreground: "asset/images/icon.png" # Your logo with a transparent background
+  
   web:
     generate: true
-    image_path: "asset/images/logo.png"
+    image_path: "asset/images/icon.png"
     background_color: "#FFFFFF"
     theme_color: "#0D2748"

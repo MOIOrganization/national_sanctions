@@ -25,6 +25,12 @@
     }
   },
   "resendOtp": "Resend OTP",
+  "resendOtpIn": "Resend OTP in {time}",
+  "@resendOtpIn": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
   "otpResent": "A new OTP has been sent.",
   "enterSixDigitOtp": "Please enter the 6-digit OTP.",
   "verifyAndLogin": "Verify and Login",

@@ -71,6 +71,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resendOtp => 'Resend OTP';
 
   @override
+  String resendOtpIn(String time) {
+    return 'Resend OTP in $time';
+  }
+
+  @override
   String get otpResent => 'A new OTP has been sent.';
 
   @override

@@ -20,6 +20,7 @@
   "otpVerification": "التحقق برمز OTP",
   "enterOtpSentTo": "أدخل رمز التحقق المرسل إلى +973 {phone}.",
   "resendOtp": "إعادة إرسال الرمز",
+  "resendOtpIn": "إعادة إرسال الرمز خلال {time}",
   "otpResent": "تم إرسال رمز تحقق جديد.",
   "enterSixDigitOtp": "يرجى إدخال رمز التحقق المكوّن من 6 أرقام.",
   "verifyAndLogin": "تحقق وسجّل الدخول",

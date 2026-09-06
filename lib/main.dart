@@ -13,6 +13,7 @@ import 'pages/un/un_entities_page.dart';
 import 'pages/un/un_individuals_page.dart';
 import 'pages/un/un_sanctions_page.dart';
 import 'services/notification_service.dart';
+import 'session/idle_session_guard.dart';
 import 'session/session_controller.dart';
 import 'theme/app_theme.dart';
 import 'widgets/header.dart';
@@ -44,6 +45,7 @@ class NationalSanctionsApp extends StatefulWidget {
 class _NationalSanctionsAppState extends State<NationalSanctionsApp> {
   final AppLocaleController _localeController = AppLocaleController();
   final SessionController _sessionController = SessionController();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -54,6 +56,7 @@ class _NationalSanctionsAppState extends State<NationalSanctionsApp> {
   @override
   void dispose() {
     _localeController.removeListener(_onLocaleChanged);
+    _sessionController.dispose();
     super.dispose();
   }
 
@@ -69,11 +72,18 @@ class _NationalSanctionsAppState extends State<NationalSanctionsApp> {
         controller: _sessionController,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Sanctions',
+          title: 'Mersad',
           theme: AppTheme.lightTheme,
           locale: _localeController.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
+          navigatorKey: _navigatorKey,
+          builder: (context, child) {
+            return IdleSessionGuard(
+              navigatorKey: _navigatorKey,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           home: const AuthGate(),
         ),
       ),

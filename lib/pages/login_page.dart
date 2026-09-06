@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -167,6 +169,9 @@ class _LoginPageState extends State<LoginPage> {
           phone: phone,
           userId: userId,
           service: _service,
+          cpr: cpr,
+          blockNo: _blockController.text.trim(),
+          expireDate: _expiryController.text.trim().replaceAll('/', ''),
         );
       },
     );
@@ -217,22 +222,11 @@ class _LoginPageState extends State<LoginPage> {
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'asset/images/background.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(color: Colors.black.withValues(alpha: 0.55)),
-          ),
-          SafeArea(
-            child: Stack(
-              children: [
-                Center(
+      backgroundColor: AppColors.primary,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
                       22,
@@ -566,8 +560,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-        ],
-      ),
     );
   }
 }
@@ -577,11 +569,17 @@ class _OtpVerificationDialog extends StatefulWidget {
     required this.phone,
     required this.userId,
     required this.service,
+    required this.cpr,
+    required this.blockNo,
+    required this.expireDate,
   });
 
   final String phone;
   final String userId;
   final SanctionsService service;
+  final String cpr;
+  final String blockNo;
+  final String expireDate;
 
   @override
   State<_OtpVerificationDialog> createState() =>
@@ -589,13 +587,75 @@ class _OtpVerificationDialog extends StatefulWidget {
 }
 
 class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
+  static const Duration _initialResendDelay = Duration(seconds: 30);
+  static const Duration _afterResendDelay = Duration(minutes: 5);
+
   final TextEditingController _otpController = TextEditingController();
+  late String _userId;
+  Timer? _resendTimer;
+  DateTime? _resendAvailableAt;
+  Duration _resendRemaining = _initialResendDelay;
   bool _isVerifying = false;
+  bool _isResending = false;
+
+  bool get _canResend =>
+      !_isVerifying && !_isResending && _resendRemaining == Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = widget.userId;
+    _resendAvailableAt = DateTime.now().add(_initialResendDelay);
+    _resendRemaining = _initialResendDelay;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tickResendCooldown();
+    });
+  }
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _otpController.dispose();
     super.dispose();
+  }
+
+  void _startResendCooldown(Duration duration) {
+    _resendTimer?.cancel();
+    _resendAvailableAt = DateTime.now().add(duration);
+    _tickResendCooldown();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _tickResendCooldown();
+    });
+  }
+
+  void _tickResendCooldown() {
+    if (!mounted) {
+      return;
+    }
+
+    final DateTime availableAt = _resendAvailableAt ?? DateTime.now();
+    final Duration remaining = availableAt.difference(DateTime.now());
+
+    if (remaining <= Duration.zero) {
+      _resendTimer?.cancel();
+      _resendTimer = null;
+      setState(() {
+        _resendRemaining = Duration.zero;
+      });
+      return;
+    }
+
+    setState(() {
+      _resendRemaining = remaining;
+    });
+  }
+
+  String _formatResendRemaining(Duration remaining) {
+    final Duration clamped = remaining < Duration.zero ? Duration.zero : remaining;
+    final int minutes = clamped.inMinutes;
+    final int seconds = clamped.inSeconds.remainder(60);
+
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _verify() async {
@@ -618,7 +678,7 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
     });
 
     try {
-      await widget.service.verifyOtp(userId: widget.userId, otp: otp);
+      await widget.service.verifyOtp(userId: _userId, otp: otp);
 
       if (!mounted) {
         return;
@@ -654,6 +714,69 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
     }
   }
 
+  Future<void> _resend() async {
+    if (!_canResend) {
+      return;
+    }
+
+    final AppLocalizations l10n = AppLocalizations.of(context);
+
+    setState(() {
+      _isResending = true;
+    });
+
+    try {
+      final Map<String, dynamic> response = await widget.service.login(
+        cpr: widget.cpr,
+        blockNo: widget.blockNo,
+        expireDate: widget.expireDate,
+        phone: widget.phone,
+      );
+
+      final String? userId = SanctionsService.userIdFromLogin(response);
+
+      if (userId != null && userId.isNotEmpty) {
+        _userId = userId;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.otpResent)),
+      );
+
+      _startResendCooldown(_afterResendDelay);
+    } on SanctionsApiException catch (error) {
+      debugPrint('[OTP] resend mob_un_login error: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      debugPrint('[OTP] resend unexpected error: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.unableToLogin)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -675,7 +798,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
             ),
           ),
           IconButton(
-            onPressed: _isVerifying ? null : () => Navigator.pop(context),
+            onPressed: (_isVerifying || _isResending)
+                ? null
+                : () => Navigator.pop(context),
             icon: const Icon(Icons.close),
           ),
         ],
@@ -699,7 +824,7 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
             const SizedBox(height: AppSpacing.lg),
             TextField(
               controller: _otpController,
-              enabled: !_isVerifying,
+              enabled: !_isVerifying && !_isResending,
               keyboardType: TextInputType.number,
               textDirection: TextDirection.ltr,
               textAlign: TextAlign.center,
@@ -723,14 +848,20 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
             ),
             const SizedBox(height: AppSpacing.xs),
             TextButton(
-              onPressed: _isVerifying
-                  ? null
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.otpResent)),
-                      );
-                    },
-              child: Text(l10n.resendOtp),
+              onPressed: _canResend ? _resend : null,
+              child: _isResending
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      _resendRemaining == Duration.zero
+                          ? l10n.resendOtp
+                          : l10n.resendOtpIn(
+                              _formatResendRemaining(_resendRemaining),
+                            ),
+                    ),
             ),
           ],
         ),
@@ -740,7 +871,7 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
           width: double.infinity,
           height: 50,
           child: FilledButton(
-            onPressed: _isVerifying ? null : _verify,
+            onPressed: (_isVerifying || _isResending) ? null : _verify,
             child: _isVerifying
                 ? const SizedBox(
                     height: 22,

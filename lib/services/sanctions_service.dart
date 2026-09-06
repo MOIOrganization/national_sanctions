@@ -179,7 +179,7 @@ class SanctionsService {
     print('==============================================');
     print('');
 
-    if (_isLoginFailure(responseJson)) {
+    if (_isOtpCheckFailure(responseJson)) {
       throw SanctionsApiException(
         message: _loginErrorMessage(
           responseJson,
@@ -192,6 +192,170 @@ class SanctionsService {
     debugPrint('✅ [OTP] OTP verified successfully');
 
     return responseJson;
+  }
+
+  /// OTP is accepted only when [un_chk_valid_otp] confirms it.
+  /// Unknown or empty results are treated as invalid.
+  bool _isOtpCheckFailure(Map<String, dynamic> responseJson) {
+    if (_isLoginFailure(responseJson)) {
+      return true;
+    }
+
+    final bool? dataValidity = _otpValidityFromData(responseJson);
+
+    if (dataValidity == false) {
+      return true;
+    }
+
+    if (dataValidity == true) {
+      return false;
+    }
+
+    if (_isOtpDataEmpty(responseJson)) {
+      return true;
+    }
+
+    final String status = _responseStatus(responseJson);
+
+    if (_isExplicitSuccessStatus(status)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool _isOtpDataEmpty(Map<String, dynamic> responseJson) {
+    final dynamic data = responseJson['DATA'];
+
+    if (data == null) {
+      return true;
+    }
+
+    if (data is List) {
+      return data.isEmpty;
+    }
+
+    if (data is Map) {
+      return data.isEmpty;
+    }
+
+    return data.toString().trim().isEmpty;
+  }
+
+  String _responseStatus(Map<String, dynamic> responseJson) {
+    return _firstNonEmptyString([
+      responseJson['STATUS'],
+      responseJson['status'],
+      responseJson['RESULT'],
+      responseJson['result'],
+    ]).toUpperCase();
+  }
+
+  bool _isExplicitSuccessStatus(String status) {
+    return status == '1' ||
+        status == 'SUCCESS' ||
+        status == 'TRUE' ||
+        status == 'OK' ||
+        status == 'Y' ||
+        status == 'YES';
+  }
+
+  bool? _otpValidityFromData(Map<String, dynamic> responseJson) {
+    final dynamic data = responseJson['DATA'];
+
+    if (data is List) {
+      if (data.isEmpty) {
+        return null;
+      }
+
+      bool? validity;
+
+      for (final dynamic item in data) {
+        if (item is! Map) {
+          continue;
+        }
+
+        final bool? itemValidity = _otpValidityFromRecord(
+          Map<String, dynamic>.from(item),
+        );
+
+        if (itemValidity == false) {
+          return false;
+        }
+
+        if (itemValidity == true) {
+          validity = true;
+        }
+      }
+
+      return validity;
+    }
+
+    if (data is Map) {
+      return _otpValidityFromRecord(Map<String, dynamic>.from(data));
+    }
+
+    return _validityFromValue(data);
+  }
+
+  bool? _otpValidityFromRecord(Map<String, dynamic> record) {
+    for (final MapEntry<String, dynamic> entry in record.entries) {
+      final String key = entry.key.toUpperCase();
+
+      final bool isValidityKey = key == 'VALID' ||
+          key == 'IS_VALID' ||
+          key == 'OTP_VALID' ||
+          key == 'VALID_OTP' ||
+          key == 'RESULT' ||
+          key == 'FLAG' ||
+          key == 'SUCCESS' ||
+          key == 'CHK' ||
+          key == 'CHECK' ||
+          key == 'STATUS';
+
+      if (!isValidityKey) {
+        continue;
+      }
+
+      final bool? validity = _validityFromValue(entry.value);
+
+      if (validity != null) {
+        return validity;
+      }
+    }
+
+    return null;
+  }
+
+  bool? _validityFromValue(dynamic value) {
+    final String text = value?.toString().trim().toUpperCase() ?? '';
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    if (text == '1' ||
+        text == 'Y' ||
+        text == 'YES' ||
+        text == 'TRUE' ||
+        text == 'SUCCESS' ||
+        text == 'OK' ||
+        text == 'VALID') {
+      return true;
+    }
+
+    if (text == '0' ||
+        text == 'N' ||
+        text == 'NO' ||
+        text == 'FALSE' ||
+        text == 'FAIL' ||
+        text == 'FAILED' ||
+        text == 'INVALID' ||
+        text == 'ERROR') {
+      return false;
+    }
+
+    return null;
   }
 
   bool _isLoginFailure(Map<String, dynamic> responseJson) {
@@ -216,12 +380,15 @@ class SanctionsService {
       responseJson['message'],
       responseJson['ERROR'],
       responseJson['error'],
+      responseJson['ERR_MSG'],
     ]).toLowerCase();
 
     if (message.contains('invalid') ||
         message.contains('failed') ||
         message.contains('not found') ||
-        message.contains('incorrect')) {
+        message.contains('incorrect') ||
+        message.contains('غير صحيح') ||
+        message.contains('غير صالح')) {
       return true;
     }
 
@@ -237,6 +404,7 @@ class SanctionsService {
       responseJson['message'],
       responseJson['ERROR'],
       responseJson['error'],
+      responseJson['ERR_MSG'],
     ]);
 
     if (message.isNotEmpty) {

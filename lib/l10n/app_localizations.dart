@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Resend OTP'**
   String get resendOtp;
 
+  /// No description provided for @resendOtpIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend OTP in {time}'**
+  String resendOtpIn(String time);
+
   /// No description provided for @otpResent.
   ///
   /// In en, this message translates to:
