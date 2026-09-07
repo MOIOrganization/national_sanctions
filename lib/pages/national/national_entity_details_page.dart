@@ -37,6 +37,7 @@ class NationalEntityDetailsPage extends StatelessWidget {
     'SENTESCE_DATE',
     'SENTENCE_DATE',
     'CREATED',
+    'CREATED_BY',
     'UPDATED',
   };
 
