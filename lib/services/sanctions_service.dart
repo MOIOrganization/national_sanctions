@@ -166,10 +166,7 @@ class SanctionsService {
     final Map<String, dynamic> responseJson = await _postWithSession(
       endpoint: 'un_chk_valid_otp',
       requestName: 'VERIFY OTP',
-      body: {
-        'user_id': userId,
-        'otp': otp,
-      },
+      body: {'user_id': userId, 'otp': otp},
     );
 
     print('');
@@ -302,7 +299,8 @@ class SanctionsService {
     for (final MapEntry<String, dynamic> entry in record.entries) {
       final String key = entry.key.toUpperCase();
 
-      final bool isValidityKey = key == 'VALID' ||
+      final bool isValidityKey =
+          key == 'VALID' ||
           key == 'IS_VALID' ||
           key == 'OTP_VALID' ||
           key == 'VALID_OTP' ||
@@ -470,6 +468,40 @@ class SanctionsService {
   }
 
   // ============================================================
+  // 3. SEARCH INDIVIDUAL
+  // ============================================================
+
+  Future<IndividualResponse> searchIndividuals({
+    required String searchText,
+    String matchMode = 'ANY',
+    int offset = 0,
+    int limit = 50,
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'search_individual_basd_on_text',
+      requestName: 'SEARCH INDIVIDUALS',
+      body: {
+        'search_criterial': searchText,
+        'match_mode': matchMode,
+        'offset': offset,
+        'limit': limit,
+      },
+    );
+
+    final IndividualResponse result = IndividualResponse.fromJson(responseJson);
+
+    debugPrint(
+      '🔎 [SEARCH INDIVIDUALS] '
+      'Query: $searchText | '
+      'Mode: $matchMode | '
+      'Total: ${result.totalRecords} | '
+      'Returned: ${result.individuals.length}',
+    );
+
+    return result;
+  }
+
+  // ============================================================
   // 3. GET INDIVIDUAL BY ID
   // ============================================================
 
@@ -542,7 +574,37 @@ class SanctionsService {
 
     return responseJson;
   }
+  // ============================================================
+  // 5.  SEARCH ENTITY
+  // ============================================================
 
+  Future<Map<String, dynamic>> searchEntities({
+    required String searchText,
+    String matchMode = 'ANY',
+    int offset = 0,
+    int limit = 50,
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'search_entity_basd_on_text',
+      requestName: 'SEARCH ENTITIES',
+      body: {
+        'search_criterial': searchText,
+        'match_mode': matchMode,
+        'offset': offset,
+        'limit': limit,
+      },
+    );
+
+    debugPrint(
+      '🔎 [SEARCH ENTITIES] '
+      'Query: $searchText | '
+      'Mode: $matchMode | '
+      'Total: ${responseJson['total_records']} | '
+      'Returned: ${(responseJson['DATA'] as List?)?.length ?? 0}',
+    );
+
+    return responseJson;
+  }
   // ============================================================
   // 5. GET ENTITY BY ID
   //
