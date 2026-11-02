@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
+import '../../session/session_controller.dart';
+import '../../session/store_review_account.dart';
+import '../../session/store_review_sample_data.dart';
 import '../../theme/app_spacing.dart';
 import '../../utils/display_names.dart';
 import '../../widgets/empty_state.dart';
@@ -69,11 +72,19 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
     }
 
     try {
-      final Map<String, dynamic> response = await _service.getNationalEntities(
-        offset: _currentOffset,
-        limit: _pageSize,
-        language: 'ARAB',
+      final bool reviewUser = StoreReviewAccount.isReviewUser(
+        SessionScope.read(context).userId,
       );
+      final Map<String, dynamic> response = reviewUser
+          ? StoreReviewSampleData.nationalEntitiesPage(
+              offset: _currentOffset,
+              limit: _pageSize,
+            )
+          : await _service.getNationalEntities(
+              offset: _currentOffset,
+              limit: _pageSize,
+              language: 'ARAB',
+            );
 
       final dynamic rawData = response['DATA'];
 
@@ -224,8 +235,7 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
   }
 
   Widget _buildContent([AppLocalizations? localizations]) {
-    final AppLocalizations l10n =
-        localizations ?? AppLocalizations.of(context);
+    final AppLocalizations l10n = localizations ?? AppLocalizations.of(context);
 
     if (_isLoading) {
       return LoadingState(message: l10n.loadingEntities);
@@ -299,7 +309,9 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
             leadingIcon: Icons.business_outlined,
             primaryName: names.primary,
             secondaryName: names.secondary,
-            identifier: _text(entity['ID']).isEmpty ? null : _text(entity['ID']),
+            identifier: _text(entity['ID']).isEmpty
+                ? null
+                : _text(entity['ID']),
             chips: [_text(entity['ENTITY_TYPE'])],
             onTap: () => _openDetails(entity),
           );

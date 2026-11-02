@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
+import '../../session/session_controller.dart';
+import '../../session/store_review_account.dart';
+import '../../session/store_review_sample_data.dart';
 import '../../theme/app_spacing.dart';
 import '../../utils/display_names.dart';
 import '../../widgets/empty_state.dart';
@@ -69,11 +72,19 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
     }
 
     try {
-      final Map<String, dynamic> response = await _service.getNationalPersons(
-        offset: _currentOffset,
-        limit: _pageSize,
-        language: 'ARAB',
+      final bool reviewUser = StoreReviewAccount.isReviewUser(
+        SessionScope.read(context).userId,
       );
+      final Map<String, dynamic> response = reviewUser
+          ? StoreReviewSampleData.nationalPersonsPage(
+              offset: _currentOffset,
+              limit: _pageSize,
+            )
+          : await _service.getNationalPersons(
+              offset: _currentOffset,
+              limit: _pageSize,
+              language: 'ARAB',
+            );
 
       final dynamic rawData = response['DATA'];
 
@@ -227,8 +238,7 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
   }
 
   Widget _buildContent([AppLocalizations? localizations]) {
-    final AppLocalizations l10n =
-        localizations ?? AppLocalizations.of(context);
+    final AppLocalizations l10n = localizations ?? AppLocalizations.of(context);
 
     if (_isLoading) {
       return LoadingState(message: l10n.loadingPersons);
@@ -310,7 +320,9 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
             leadingIcon: Icons.person_outline,
             primaryName: names.primary,
             secondaryName: names.secondary,
-            identifier: _text(person['ID']).isEmpty ? null : _text(person['ID']),
+            identifier: _text(person['ID']).isEmpty
+                ? null
+                : _text(person['ID']),
             chips: [
               _firstText(person, [
                 'NATIONALITY',

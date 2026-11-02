@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBEs8syP3EXpFOjdW6msVbnRT8gKM2x2r8',
-    appId: '1:216778829204:android:b2501224dbcd895afc7381',
+    appId: '1:216778829204:android:499719f926365a77fc7381',
     messagingSenderId: '216778829204',
     projectId: 'moi-bh-sanctions',
     storageBucket: 'moi-bh-sanctions.firebasestorage.app',

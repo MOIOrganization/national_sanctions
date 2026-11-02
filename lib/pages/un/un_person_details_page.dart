@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models.dart';
 import '../../services/sanctions_service.dart';
+import '../../session/session_controller.dart';
+import '../../session/store_review_account.dart';
+import '../../session/store_review_sample_data.dart';
 import '../../theme/app_spacing.dart';
 import '../../utils/detail_fields.dart';
 import '../../utils/display_names.dart';
@@ -45,6 +48,24 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
       _isRefreshing = true;
       _refreshError = null;
     });
+
+    if (StoreReviewAccount.isReviewUser(SessionScope.read(context).userId)) {
+      final Individual? sample = StoreReviewSampleData.individualById(
+        widget.dataId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        if (sample != null) {
+          _individual = sample;
+        }
+        _isRefreshing = false;
+      });
+      return;
+    }
 
     try {
       final Individual result = await _service.getIndividualById(

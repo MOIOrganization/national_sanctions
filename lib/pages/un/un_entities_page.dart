@@ -387,6 +387,9 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
+import '../../session/session_controller.dart';
+import '../../session/store_review_account.dart';
+import '../../session/store_review_sample_data.dart';
 import '../../theme/app_spacing.dart';
 import '../../utils/display_names.dart';
 import '../../widgets/empty_state.dart';
@@ -674,7 +677,7 @@ class _EntitiesPageState extends State<EntitiesPage> {
 
     if (dataId == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).invalidRecordId)),
+        SnackBar(content: Text(AppLocalizations.of(context).invalidRecordId))
       );
       return;
     }

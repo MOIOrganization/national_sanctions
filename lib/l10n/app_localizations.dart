@@ -248,6 +248,72 @@ abstract class AppLocalizations {
   /// **'Unable to login. Please try again.'**
   String get unableToLogin;
 
+  /// No description provided for @invalidCpr.
+  ///
+  /// In en, this message translates to:
+  /// **'The CPR number could not be verified.'**
+  String get invalidCpr;
+
+  /// No description provided for @invalidCprExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'The CPR expiry date is invalid.'**
+  String get invalidCprExpiry;
+
+  /// No description provided for @invalidBlockNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'The block number is invalid.'**
+  String get invalidBlockNumber;
+
+  /// No description provided for @underAgeLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'You must meet the minimum age requirement to sign in.'**
+  String get underAgeLogin;
+
+  /// No description provided for @mawaeidUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to reach the authentication service. Please try again.'**
+  String get mawaeidUnavailable;
+
+  /// No description provided for @mawaeidTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The authentication request timed out. Please try again.'**
+  String get mawaeidTimeout;
+
+  /// No description provided for @mawaeidRegistrationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to complete authentication. Please try again.'**
+  String get mawaeidRegistrationFailed;
+
+  /// No description provided for @otpAttemptsExhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP attempts have been exhausted. Please try again later.'**
+  String get otpAttemptsExhausted;
+
+  /// No description provided for @differentMobileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number mismatch'**
+  String get differentMobileTitle;
+
+  /// No description provided for @differentMobileMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This CPR is registered with a different mobile number. If you continue, a verification code will be sent to the number you entered.'**
+  String get differentMobileMessage;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueAction;
+
   /// No description provided for @unableToVerifyOtp.
   ///
   /// In en, this message translates to:

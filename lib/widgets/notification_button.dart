@@ -4,6 +4,8 @@ import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/sanctions_service.dart';
 import '../session/session_controller.dart';
+import '../session/store_review_account.dart';
+import '../session/store_review_sample_data.dart';
 import '../theme/app_colors.dart';
 import 'notification_popup.dart';
 
@@ -30,7 +32,13 @@ class _NotificationButtonState extends State<NotificationButton> {
     final String? userId = session.userId;
     List<AppNotification> notifications = session.notifications;
 
-    if (userId != null && userId.isNotEmpty) {
+    if (StoreReviewAccount.isReviewUser(userId)) {
+      notifications = StoreReviewSampleData.notifications;
+
+      if (mounted) {
+        session.setNotifications(notifications);
+      }
+    } else if (userId != null && userId.isNotEmpty) {
       try {
         notifications = await SanctionsService().getUserNotifications(
           userId: userId,
@@ -56,18 +64,14 @@ class _NotificationButtonState extends State<NotificationButton> {
       _isLoading = false;
     });
 
-    await showNotificationPopup(
-      context: context,
-      notifications: notifications,
-    );
+    await showNotificationPopup(context: context, notifications: notifications);
   }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final SessionController session = SessionScope.of(context);
-    final int visibleCount =
-        session.unreadCount < 0 ? 0 : session.unreadCount;
+    final int visibleCount = session.unreadCount < 0 ? 0 : session.unreadCount;
 
     return IconButton(
       tooltip: l10n.notifications,

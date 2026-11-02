@@ -88,6 +88,44 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unableToLogin => 'تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.';
 
   @override
+  String get invalidCpr => 'تعذر التحقق من الرقم الشخصي.';
+
+  @override
+  String get invalidCprExpiry => 'تاريخ انتهاء البطاقة غير صحيح.';
+
+  @override
+  String get invalidBlockNumber => 'رقم المجمع غير صحيح.';
+
+  @override
+  String get underAgeLogin => 'يجب استيفاء الحد الأدنى للعمر لتسجيل الدخول.';
+
+  @override
+  String get mawaeidUnavailable =>
+      'تعذر الوصول إلى خدمة المصادقة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get mawaeidTimeout =>
+      'انتهت مهلة طلب المصادقة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get mawaeidRegistrationFailed =>
+      'تعذر إكمال المصادقة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get otpAttemptsExhausted =>
+      'تم استنفاد محاولات رمز التحقق. يرجى المحاولة لاحقاً.';
+
+  @override
+  String get differentMobileTitle => 'رقم الجوال غير مطابق';
+
+  @override
+  String get differentMobileMessage =>
+      'هذا الرقم الشخصي مسجّل برقم جوال مختلف. إذا تابعت، سيتم إرسال رمز التحقق إلى الرقم الذي أدخلته.';
+
+  @override
+  String get continueAction => 'متابعة';
+
+  @override
   String get unableToVerifyOtp =>
       'تعذر التحقق من الرمز. يرجى المحاولة مرة أخرى.';
 
@@ -491,7 +529,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get version => 'الإصدار';
 
   @override
-  String get invalidRecordId => 'هذا السجل لا يحتوي على رقم بيانات صالح.';
+  String get invalidRecordId => 'هذا السجل لا يحتوي على رقم بيانات صحيح.';
 
   @override
   String get notifications => 'الإشعارات';

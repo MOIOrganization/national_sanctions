@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/sanctions_service.dart';
+import '../../session/session_controller.dart';
+import '../../session/store_review_account.dart';
+import '../../session/store_review_sample_data.dart';
 import '../../theme/app_spacing.dart';
 import '../../utils/detail_fields.dart';
 import '../../utils/display_names.dart';
@@ -65,6 +68,24 @@ class _EntityDetailsPageState extends State<EntityDetailsPage> {
       _isRefreshing = true;
       _refreshError = null;
     });
+
+    if (StoreReviewAccount.isReviewUser(SessionScope.read(context).userId)) {
+      final Map<String, dynamic>? sample = StoreReviewSampleData.entityById(
+        widget.dataId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        if (sample != null) {
+          _entity = sample;
+        }
+        _isRefreshing = false;
+      });
+      return;
+    }
 
     try {
       final Map<String, dynamic> result = await _service.getEntityById(

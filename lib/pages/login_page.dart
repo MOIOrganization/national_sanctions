@@ -5,8 +5,12 @@ import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
+// Temporarily disabled while verifying the original OTP flow.
+// import '../services/mawaeid_auth_service.dart';
 import '../services/sanctions_service.dart';
 import '../session/session_controller.dart';
+import '../session/store_review_account.dart';
+import '../session/store_review_sample_data.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
@@ -23,6 +27,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final SanctionsService _service = SanctionsService();
+  // Temporarily disabled while verifying the original OTP flow.
+  // final MawaeidAuthService _mawaeidAuth = MawaeidAuthService();
 
   final TextEditingController _cprController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
@@ -87,12 +93,62 @@ class _LoginPageState extends State<LoginPage> {
       _isLoggingIn = true;
     });
 
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String cpr = _cprController.text.trim();
+    final String blockNo = _blockController.text.trim();
+    final String expiryDisplay = _expiryController.text.trim();
+    final String phone = _phoneController.text.trim();
+
     try {
+      if (StoreReviewAccount.matches(
+        cpr: cpr,
+        expiry: expiryDisplay,
+        block: blockNo,
+        phone: phone,
+      )) {
+        if (!mounted) {
+          return;
+        }
+
+        SessionScope.read(context).setSignedIn(
+          cpr: StoreReviewAccount.cpr,
+          userId: StoreReviewAccount.userId,
+          notifications: StoreReviewSampleData.notifications,
+        );
+        return;
+      }
+
+      // Mawaeid pre-auth temporarily disabled so we can verify the
+      // original application OTP flow on its own.
+      // final MawaeidAuthResult mawaeidResult = await _mawaeidAuth.authenticate(
+      //   cpr: cpr,
+      //   blockNo: blockNo,
+      //   expiryDisplayDate: expiryDisplay,
+      //   mobile: phone,
+      // );
+      //
+      // if (!mounted) {
+      //   return;
+      // }
+      //
+      // if (mawaeidResult.requiresDifferentMobileWarning) {
+      //   final bool proceed = await showAppConfirm(
+      //     context: context,
+      //     title: l10n.differentMobileTitle,
+      //     message: l10n.differentMobileMessage,
+      //     confirmLabel: l10n.continueAction,
+      //   );
+      //
+      //   if (!proceed || !mounted) {
+      //     return;
+      //   }
+      // }
+
       final Map<String, dynamic> response = await _service.login(
-        cpr: _cprController.text.trim(),
-        blockNo: _blockController.text.trim(),
-        expireDate: _expiryController.text.trim().replaceAll('/', ''),
-        phone: _phoneController.text.trim(),
+        cpr: cpr,
+        blockNo: blockNo,
+        expireDate: expiryDisplay.replaceAll('/', ''),
+        phone: phone,
       );
 
       debugPrint('[LOGIN PAGE] mob_un_login response: $response');
@@ -102,6 +158,16 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       await _completeSignIn(response);
+      // } on MawaeidAuthException catch (error) {
+      //   debugPrint('[LOGIN PAGE] Mawaeid authentication error: $error');
+      //
+      //   if (!mounted) {
+      //     return;
+      //   }
+      //
+      //   setState(() {
+      //     _formError = _mawaeidErrorMessage(l10n, error);
+      //   });
     } on SanctionsApiException catch (error) {
       debugPrint('[LOGIN PAGE] mob_un_login error: $error');
 
@@ -110,17 +176,17 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       setState(() {
-        _formError = error.message;
+        _formError = _loginApiErrorMessage(l10n, error.message);
       });
     } catch (error) {
-      debugPrint('[LOGIN PAGE] mob_un_login unexpected error: $error');
+      debugPrint('[LOGIN PAGE] login unexpected error: $error');
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _formError = AppLocalizations.of(context).unableToLogin;
+        _formError = l10n.unableToLogin;
       });
     } finally {
       if (mounted) {
@@ -130,6 +196,58 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
+  String _loginApiErrorMessage(AppLocalizations l10n, String message) {
+    final String normalized = message.trim().toUpperCase();
+
+    if (normalized.contains('WRONG BLOCK') ||
+        normalized.contains('BLOCK NUMBER')) {
+      return l10n.invalidBlockNumber;
+    }
+
+    if (normalized.contains('WRONG EXPIR') ||
+        normalized.contains('EXPIRY DATE') ||
+        normalized.contains('EXPIRE DATE')) {
+      return l10n.invalidCprExpiry;
+    }
+
+    if (normalized.contains('UNKNOWN_RESPONSE_FORMAT') ||
+        normalized.contains('UNKNOWN RESPONSE')) {
+      return l10n.unableToLogin;
+    }
+
+    if (message.trim().isNotEmpty) {
+      return message.trim();
+    }
+
+    return l10n.unableToLogin;
+  }
+
+  // String _mawaeidErrorMessage(
+  //   AppLocalizations l10n,
+  //   MawaeidAuthException error,
+  // ) {
+  //   switch (error.code) {
+  //     case MawaeidAuthErrorCode.invalidCpr:
+  //       return l10n.invalidCpr;
+  //     case MawaeidAuthErrorCode.invalidExpiry:
+  //       return l10n.invalidCprExpiry;
+  //     case MawaeidAuthErrorCode.invalidBlock:
+  //       return l10n.invalidBlockNumber;
+  //     case MawaeidAuthErrorCode.underAge:
+  //       return l10n.underAgeLogin;
+  //     case MawaeidAuthErrorCode.otpAttemptsExhausted:
+  //       return l10n.otpAttemptsExhausted;
+  //     case MawaeidAuthErrorCode.serverUnavailable:
+  //       return l10n.mawaeidUnavailable;
+  //     case MawaeidAuthErrorCode.timeout:
+  //       return l10n.mawaeidTimeout;
+  //     case MawaeidAuthErrorCode.registrationFailed:
+  //     case MawaeidAuthErrorCode.bootstrapFailed:
+  //     case MawaeidAuthErrorCode.malformedResponse:
+  //       return l10n.mawaeidRegistrationFailed;
+  //   }
+  // }
 
   Future<void> _onBiometricLoginPressed() async {
     final SessionController session = SessionScope.read(context);
@@ -155,8 +273,15 @@ class _LoginPageState extends State<LoginPage> {
     debugPrint('[LOGIN PAGE] login user_id: $userId');
 
     if (userId == null || userId.isEmpty) {
+      final String apiError = SanctionsService.loginErrorMessageFromResponse(
+        loginResponse,
+      );
+
       setState(() {
-        _formError = AppLocalizations.of(context).unableToLogin;
+        _formError = _loginApiErrorMessage(
+          AppLocalizations.of(context),
+          apiError,
+        );
       });
       return;
     }
@@ -192,11 +317,9 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    SessionScope.read(context).setSignedIn(
-      cpr: cpr,
-      userId: userId,
-      notifications: notifications,
-    );
+    SessionScope.read(
+      context,
+    ).setSignedIn(cpr: cpr, userId: userId, notifications: notifications);
   }
 
   // ============================================================
@@ -227,339 +350,320 @@ class _LoginPageState extends State<LoginPage> {
         child: Stack(
           children: [
             Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      22,
-                      48,
-                      22,
-                      AppSpacing.xl,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 350,
-                            height: 350,
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.hero,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.20),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 7),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 48, 22, AppSpacing.xl),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 350,
+                        height: 350,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.hero),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.20),
+                              blurRadius: 18,
+                              offset: const Offset(0, 7),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'asset/images/logo.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.bottomCenter,
+                        ),
+                      ),
+                      // Text(
+                      //   l10n.appTitle,
+                      //   textAlign: TextAlign.center,
+                      //   style: const TextStyle(
+                      //     color: Colors.white,
+                      //     fontSize: 27,
+                      //     fontWeight: FontWeight.bold,
+                      //     height: 1,
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 4),
+                      // Text(
+                      //   l10n.loginSubtitle,
+                      //   textAlign: TextAlign.center,
+                      //   style: const TextStyle(
+                      //     color: Colors.white70,
+                      //     fontSize: 14,
+                      //     height: 1.5,
+                      //   ),
+                      // ),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.96),
+                          borderRadius: BorderRadius.circular(AppRadius.hero),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.20),
+                              blurRadius: 22,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.login,
+                                style: AppTextStyles.heading.copyWith(
+                                  fontSize: 21,
+                                  height: 28 / 21,
                                 ),
-                              ],
-                            ),
-                            child: Image.asset(
-                              'asset/images/logo.png',
-                              fit: BoxFit.contain,
-                              alignment: Alignment.bottomCenter,
-                            ),
-                          ),
-                          // Text(
-                          //   l10n.appTitle,
-                          //   textAlign: TextAlign.center,
-                          //   style: const TextStyle(
-                          //     color: Colors.white,
-                          //     fontSize: 27,
-                          //     fontWeight: FontWeight.bold,
-                          //     height: 1,
-                          //   ),
-                          // ),
-                          // const SizedBox(height: 4),
-                          // Text(
-                          //   l10n.loginSubtitle,
-                          //   textAlign: TextAlign.center,
-                          //   style: const TextStyle(
-                          //     color: Colors.white70,
-                          //     fontSize: 14,
-                          //     height: 1.5,
-                          //   ),
-                          // ),
-                          const SizedBox(height: 18),
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.96),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.hero,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.20),
-                                  blurRadius: 22,
-                                  offset: const Offset(0, 10),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                l10n.loginCardHint,
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.muted,
                                 ),
-                              ],
-                            ),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.login,
-                                    style: AppTextStyles.heading.copyWith(
-                                      fontSize: 21,
-                                      height: 28 / 21,
+                              ),
+                              const SizedBox(height: 18),
+                              TextFormField(
+                                controller: _cprController,
+                                keyboardType: TextInputType.number,
+                                textInputAction: TextInputAction.next,
+                                textDirection: TextDirection.ltr,
+                                maxLength: 9,
+                                enabled: !_isLoggingIn,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (_) {
+                                  if (_formError != null) {
+                                    setState(() {
+                                      _formError = null;
+                                    });
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.cprNumber,
+                                  hintText: l10n.enterCpr,
+                                  prefixIcon: const Icon(Icons.badge_outlined),
+                                  counterText: '',
+                                ),
+                                validator: (value) {
+                                  final String text = value?.trim() ?? '';
+
+                                  if (text.isEmpty) {
+                                    return l10n.cprRequired;
+                                  }
+
+                                  if (text.length != 9) {
+                                    return l10n.cprMustBe9;
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              TextFormField(
+                                controller: _expiryController,
+                                readOnly: true,
+                                enabled: !_isLoggingIn,
+                                textDirection: TextDirection.ltr,
+                                onTap: _selectExpiryDate,
+                                decoration: InputDecoration(
+                                  labelText: l10n.cprExpiry,
+                                  hintText: 'DD/MM/YYYY',
+                                  prefixIcon: const Icon(
+                                    Icons.calendar_month_outlined,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return l10n.selectExpiry;
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              TextFormField(
+                                controller: _blockController,
+                                keyboardType: TextInputType.number,
+                                textInputAction: TextInputAction.next,
+                                textDirection: TextDirection.ltr,
+                                maxLength: 4,
+                                enabled: !_isLoggingIn,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (_) {
+                                  if (_formError != null) {
+                                    setState(() {
+                                      _formError = null;
+                                    });
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.blockNumber,
+                                  hintText: l10n.enterBlock,
+                                  prefixIcon: const Icon(
+                                    Icons.location_on_outlined,
+                                  ),
+                                  counterText: '',
+                                ),
+                                validator: (value) {
+                                  final String text = value?.trim() ?? '';
+
+                                  if (text.isEmpty) {
+                                    return l10n.blockRequired;
+                                  }
+
+                                  if (int.tryParse(text) == null) {
+                                    return l10n.invalidBlockNumber;
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              TextFormField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                textInputAction: TextInputAction.done,
+                                textDirection: TextDirection.ltr,
+                                enabled: !_isLoggingIn,
+                                maxLength: 8,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onFieldSubmitted: (_) => _continue(),
+                                onChanged: (_) {
+                                  if (_formError != null) {
+                                    setState(() {
+                                      _formError = null;
+                                    });
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: l10n.mobileNumber,
+                                  hintText: l10n.enterMobile,
+                                  prefixIcon: const Icon(Icons.phone_outlined),
+                                  prefixText: '+973 ',
+                                  counterText: '',
+                                ),
+                                validator: (value) {
+                                  final String text = value?.trim() ?? '';
+
+                                  if (text.isEmpty) {
+                                    return l10n.mobileRequired;
+                                  }
+
+                                  if (text.length != 8) {
+                                    return l10n.mobileMustBe8;
+                                  }
+
+                                  return null;
+                                },
+                              ),
+                              if (_formError != null) ...[
+                                const SizedBox(height: AppSpacing.lg),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(AppSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: AppRadius.border,
+                                    border: Border.all(
+                                      color: AppColors.error.withValues(
+                                        alpha: 0.35,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    l10n.loginCardHint,
-                                    style: AppTextStyles.body.copyWith(
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  TextFormField(
-                                    controller: _cprController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.next,
-                                    textDirection: TextDirection.ltr,
-                                    maxLength: 9,
-                                    enabled: !_isLoggingIn,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    onChanged: (_) {
-                                      if (_formError != null) {
-                                        setState(() {
-                                          _formError = null;
-                                        });
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                      labelText: l10n.cprNumber,
-                                      hintText: l10n.enterCpr,
-                                      prefixIcon: const Icon(
-                                        Icons.badge_outlined,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: AppColors.error,
                                       ),
-                                      counterText: '',
-                                    ),
-                                    validator: (value) {
-                                      final String text = value?.trim() ?? '';
-
-                                      if (text.isEmpty) {
-                                        return l10n.cprRequired;
-                                      }
-
-                                      if (text.length != 9) {
-                                        return l10n.cprMustBe9;
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  TextFormField(
-                                    controller: _expiryController,
-                                    readOnly: true,
-                                    enabled: !_isLoggingIn,
-                                    textDirection: TextDirection.ltr,
-                                    onTap: _selectExpiryDate,
-                                    decoration: InputDecoration(
-                                      labelText: l10n.cprExpiry,
-                                      hintText: 'DD/MM/YYYY',
-                                      prefixIcon: const Icon(
-                                        Icons.calendar_month_outlined,
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return l10n.selectExpiry;
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  TextFormField(
-                                    controller: _blockController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.next,
-                                    textDirection: TextDirection.ltr,
-                                    maxLength: 4,
-                                    enabled: !_isLoggingIn,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    onChanged: (_) {
-                                      if (_formError != null) {
-                                        setState(() {
-                                          _formError = null;
-                                        });
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                      labelText: l10n.blockNumber,
-                                      hintText: l10n.enterBlock,
-                                      prefixIcon: const Icon(
-                                        Icons.location_on_outlined,
-                                      ),
-                                      counterText: '',
-                                    ),
-                                    validator: (value) {
-                                      final String text = value?.trim() ?? '';
-
-                                      if (text.isEmpty) {
-                                        return l10n.blockRequired;
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  TextFormField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    textInputAction: TextInputAction.done,
-                                    textDirection: TextDirection.ltr,
-                                    enabled: !_isLoggingIn,
-                                    maxLength: 8,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    onFieldSubmitted: (_) => _continue(),
-                                    onChanged: (_) {
-                                      if (_formError != null) {
-                                        setState(() {
-                                          _formError = null;
-                                        });
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                      labelText: l10n.mobileNumber,
-                                      hintText: l10n.enterMobile,
-                                      prefixIcon: const Icon(
-                                        Icons.phone_outlined,
-                                      ),
-                                      prefixText: '+973 ',
-                                      counterText: '',
-                                    ),
-                                    validator: (value) {
-                                      final String text = value?.trim() ?? '';
-
-                                      if (text.isEmpty) {
-                                        return l10n.mobileRequired;
-                                      }
-
-                                      if (text.length != 8) {
-                                        return l10n.mobileMustBe8;
-                                      }
-
-                                      return null;
-                                    },
-                                  ),
-                                  if (_formError != null) ...[
-                                    const SizedBox(height: AppSpacing.lg),
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(
-                                        AppSpacing.md,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.error.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderRadius: AppRadius.border,
-                                        border: Border.all(
-                                          color: AppColors.error.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                            Icons.error_outline,
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Expanded(
+                                        child: Text(
+                                          _formError!,
+                                          style: AppTextStyles.body.copyWith(
                                             color: AppColors.error,
                                           ),
-                                          const SizedBox(width: AppSpacing.sm),
-                                          Expanded(
-                                            child: Text(
-                                              _formError!,
-                                              style: AppTextStyles.body
-                                                  .copyWith(
-                                                    color: AppColors.error,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 20),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 52,
-                                    child: FilledButton(
-                                      onPressed: _isLoggingIn
-                                          ? null
-                                          : _continue,
-                                      child: _isLoggingIn
-                                          ? const SizedBox(
-                                              height: 22,
-                                              width: 22,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Text(l10n.login),
-                                    ),
+                                    ],
                                   ),
-                                  const SizedBox(height: AppSpacing.md),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: OutlinedButton(
-                                      onPressed: _isLoggingIn
-                                          ? null
-                                          : _onBiometricLoginPressed,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.fingerprint,
-                                            size: 20,
+                                ),
+                              ],
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: FilledButton(
+                                  onPressed: _isLoggingIn ? null : _continue,
+                                  child: _isLoggingIn
+                                      ? const SizedBox(
+                                          height: 22,
+                                          width: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
                                           ),
-                                          const SizedBox(width: AppSpacing.sm),
-                                          Flexible(
-                                            child: Text(
-                                              l10n.biometricLogin,
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                        )
+                                      : Text(l10n.login),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: AppSpacing.md),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: OutlinedButton(
+                                  onPressed: _isLoggingIn
+                                      ? null
+                                      : _onBiometricLoginPressed,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.fingerprint, size: 20),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      Flexible(
+                                        child: Text(
+                                          l10n.biometricLogin,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 18),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 18),
+                    ],
                   ),
                 ),
-                const Align(
-                  alignment: AlignmentDirectional.topEnd,
-                  child: LanguageToggleButton(),
-                ),
-              ],
+              ),
             ),
-          ),
+            const Align(
+              alignment: AlignmentDirectional.topEnd,
+              child: LanguageToggleButton(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -582,8 +686,7 @@ class _OtpVerificationDialog extends StatefulWidget {
   final String expireDate;
 
   @override
-  State<_OtpVerificationDialog> createState() =>
-      _OtpVerificationDialogState();
+  State<_OtpVerificationDialog> createState() => _OtpVerificationDialogState();
 }
 
 class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
@@ -651,7 +754,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
   }
 
   String _formatResendRemaining(Duration remaining) {
-    final Duration clamped = remaining < Duration.zero ? Duration.zero : remaining;
+    final Duration clamped = remaining < Duration.zero
+        ? Duration.zero
+        : remaining;
     final int minutes = clamped.inMinutes;
     final int seconds = clamped.inSeconds.remainder(60);
 
@@ -667,9 +772,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
     final String otp = _otpController.text.trim();
 
     if (otp.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.enterSixDigitOtp)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.enterSixDigitOtp)));
       return;
     }
 
@@ -692,9 +797,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       debugPrint('[OTP] un_chk_valid_otp unexpected error: $error');
 
@@ -702,9 +807,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.unableToVerifyOtp)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.unableToVerifyOtp)));
     } finally {
       if (mounted) {
         setState(() {
@@ -743,9 +848,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.otpResent)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.otpResent)));
 
       _startResendCooldown(_afterResendDelay);
     } on SanctionsApiException catch (error) {
@@ -755,9 +860,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       debugPrint('[OTP] resend unexpected error: $error');
 
@@ -765,9 +870,9 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.unableToLogin)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.unableToLogin)));
     } finally {
       if (mounted) {
         setState(() {
@@ -781,8 +886,8 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
 
-    final double maxContentWidth =
-        (MediaQuery.sizeOf(context).width - 56).clamp(200, 360);
+    final double maxContentWidth = (MediaQuery.sizeOf(context).width - 56)
+        .clamp(200, 360);
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -792,10 +897,7 @@ class _OtpVerificationDialogState extends State<_OtpVerificationDialog> {
       title: Row(
         children: [
           Expanded(
-            child: Text(
-              l10n.otpVerification,
-              style: AppTextStyles.heading,
-            ),
+            child: Text(l10n.otpVerification, style: AppTextStyles.heading),
           ),
           IconButton(
             onPressed: (_isVerifying || _isResending)

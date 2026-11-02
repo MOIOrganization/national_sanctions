@@ -88,6 +88,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unableToLogin => 'Unable to login. Please try again.';
 
   @override
+  String get invalidCpr => 'The CPR number could not be verified.';
+
+  @override
+  String get invalidCprExpiry => 'The CPR expiry date is invalid.';
+
+  @override
+  String get invalidBlockNumber => 'The block number is invalid.';
+
+  @override
+  String get underAgeLogin =>
+      'You must meet the minimum age requirement to sign in.';
+
+  @override
+  String get mawaeidUnavailable =>
+      'Unable to reach the authentication service. Please try again.';
+
+  @override
+  String get mawaeidTimeout =>
+      'The authentication request timed out. Please try again.';
+
+  @override
+  String get mawaeidRegistrationFailed =>
+      'Unable to complete authentication. Please try again.';
+
+  @override
+  String get otpAttemptsExhausted =>
+      'OTP attempts have been exhausted. Please try again later.';
+
+  @override
+  String get differentMobileTitle => 'Mobile number mismatch';
+
+  @override
+  String get differentMobileMessage =>
+      'This CPR is registered with a different mobile number. If you continue, a verification code will be sent to the number you entered.';
+
+  @override
+  String get continueAction => 'Continue';
+
+  @override
   String get unableToVerifyOtp =>
       'Unable to verify the code. Please try again.';
 

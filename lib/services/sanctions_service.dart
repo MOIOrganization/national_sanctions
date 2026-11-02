@@ -373,18 +373,28 @@ class SanctionsService {
       return true;
     }
 
+    final String errMsg = _firstNonEmptyString([
+      responseJson['ERR_MSG'],
+      responseJson['err_msg'],
+    ]);
+
+    // mob_un_login returns business errors as ERR_MSG with HTTP 200.
+    if (errMsg.isNotEmpty) {
+      return true;
+    }
+
     final String message = _firstNonEmptyString([
       responseJson['MESSAGE'],
       responseJson['message'],
       responseJson['ERROR'],
       responseJson['error'],
-      responseJson['ERR_MSG'],
     ]).toLowerCase();
 
     if (message.contains('invalid') ||
         message.contains('failed') ||
         message.contains('not found') ||
         message.contains('incorrect') ||
+        message.contains('wrong') ||
         message.contains('غير صحيح') ||
         message.contains('غير صالح')) {
       return true;
@@ -398,11 +408,12 @@ class SanctionsService {
     String fallback = 'Login details could not be verified.',
   }) {
     final String message = _firstNonEmptyString([
+      responseJson['ERR_MSG'],
+      responseJson['err_msg'],
       responseJson['MESSAGE'],
       responseJson['message'],
       responseJson['ERROR'],
       responseJson['error'],
-      responseJson['ERR_MSG'],
     ]);
 
     if (message.isNotEmpty) {
@@ -787,6 +798,25 @@ class SanctionsService {
     }
 
     return null;
+  }
+
+  static String loginErrorMessageFromResponse(Map<String, dynamic> json) {
+    for (final dynamic value in [
+      json['ERR_MSG'],
+      json['err_msg'],
+      json['MESSAGE'],
+      json['message'],
+      json['ERROR'],
+      json['error'],
+    ]) {
+      final String text = value?.toString().trim() ?? '';
+
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return '';
   }
 
   // ============================================================
