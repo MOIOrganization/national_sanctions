@@ -200,6 +200,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get persons => 'Persons';
 
   @override
+  String get vessels => 'Vessels ';
+
+  @override
   String get unIndividualsDescription =>
       'Search individuals by ID, name, nationality or reference number.';
 
@@ -214,6 +217,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nationalEntitiesDescription =>
       'Search entities included in the national sanctions list.';
+
+  @override
+  String get nationalvesselsDescription =>
+      'Search vessels included in the national sanctions list.';
 
   @override
   String get searchByNameIdReference =>

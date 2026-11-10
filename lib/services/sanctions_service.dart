@@ -750,7 +750,39 @@ class SanctionsService {
   }
 
   // ============================================================
-  // 8. GET USER NOTIFICATIONS
+  // 8. GET NATIONAL LIST VESSELS
+  // ============================================================
+
+  Future<Map<String, dynamic>> getNationalVessels({
+    int offset = 0,
+    int limit = 50,
+    String language = 'ARAB',
+  }) async {
+    final Map<String, dynamic> responseJson = await _postWithSession(
+      endpoint: 'bl_get_nl_vessels',
+      requestName: 'GET NATIONAL VESSELS',
+      body: {
+        'offset': offset.toString(),
+        'limit': limit.toString(),
+        'lang': language,
+      },
+    );
+
+    final dynamic data = responseJson['DATA'];
+
+    final int recordCount = data is List ? data.length : 0;
+
+    debugPrint(
+      '✅ [GET NATIONAL VESSELS] '
+      'Total: ${responseJson['total_records']} | '
+      'Returned: $recordCount',
+    );
+
+    return responseJson;
+  }
+
+  // ============================================================
+  // 9. GET USER NOTIFICATIONS
   // ============================================================
 
   Future<List<AppNotification>> getUserNotifications({

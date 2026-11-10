@@ -7,6 +7,7 @@ import '../../widgets/destination_card.dart';
 import '../../widgets/notice_banner.dart';
 import 'national_entities_page.dart';
 import 'national_persons_page.dart';
+import 'national_vessels_page.dart';
 
 class NationalSanctionsPage extends StatelessWidget {
   const NationalSanctionsPage({super.key});
@@ -40,6 +41,18 @@ class NationalSanctionsPage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const NationalEntitiesPage()),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        DestinationCard(
+          icon: Icons.business_outlined,
+          title: l10n.vessels,
+          description: l10n.nationalvesselsDescription,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NationalVesselsPage()),
             );
           },
         ),

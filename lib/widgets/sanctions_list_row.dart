@@ -54,21 +54,14 @@ class SanctionsListRow extends StatelessWidget {
                   color: AppColors.primaryContainer,
                   borderRadius: AppRadius.border,
                 ),
-                child: Icon(
-                  leadingIcon,
-                  size: 22,
-                  color: AppColors.primary,
-                ),
+                child: Icon(leadingIcon, size: 22, color: AppColors.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      primaryName,
-                      style: AppTextStyles.subheading,
-                    ),
+                    Text(primaryName, style: AppTextStyles.subheading),
                     if (secondaryName != null &&
                         secondaryName!.trim().isNotEmpty &&
                         secondaryName!.trim() != primaryName) ...[
@@ -80,12 +73,10 @@ class SanctionsListRow extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (identifier != null && identifier!.trim().isNotEmpty) ...[
+                    if (identifier != null &&
+                        identifier!.trim().isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        identifier!,
-                        style: AppTextStyles.caption,
-                      ),
+                      Text(identifier!, style: AppTextStyles.caption),
                     ],
                     if (visibleChips.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.sm),
@@ -105,11 +96,13 @@ class SanctionsListRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              const Padding(
-                padding: EdgeInsets.only(top: AppSpacing.xs),
-                child: DirectionalChevron(),
-              ),
+              if (onTap != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const Padding(
+                  padding: EdgeInsets.only(top: AppSpacing.xs),
+                  child: DirectionalChevron(),
+                ),
+              ],
             ],
           ),
         ),

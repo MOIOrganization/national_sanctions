@@ -69,10 +69,13 @@
   "individuals": "Individuals",
   "entities": "Entities",
   "persons": "Persons",
+  "vessels": "Vessels ",
+
   "unIndividualsDescription": "Search individuals by ID, name, nationality or reference number.",
   "unEntitiesDescription": "Search companies, organisations and other listed entities.",
   "nationalPersonsDescription": "Search persons included in the national sanctions list.",
   "nationalEntitiesDescription": "Search entities included in the national sanctions list.",
+  "nationalvesselsDescription": "Search vessels included in the national sanctions list.",
   "searchByNameIdReference": "Search by name, ID or reference number",
   "searchByNameIdRecorded": "Search by name, ID or recorded name",
   "showingCount": "Showing {loaded} of {total}",

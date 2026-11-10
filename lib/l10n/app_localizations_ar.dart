@@ -200,6 +200,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get persons => 'الأشخاص';
 
   @override
+  String get vessels => 'القطع البحرية';
+
+  @override
   String get unIndividualsDescription =>
       'ابحث عن الأشخاص بالرقم أو الاسم أو الجنسية أو الرقم المرجعي.';
 
@@ -214,6 +217,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nationalEntitiesDescription =>
       'ابحث عن الكيانات المدرجة في القائمة الوطنية للعقوبات.';
+
+  @override
+  String get nationalvesselsDescription =>
+      'ابحث عن قطع بحرية المدرجة في القائمة الوطنية للعقوبات.';
 
   @override
   String get searchByNameIdReference =>

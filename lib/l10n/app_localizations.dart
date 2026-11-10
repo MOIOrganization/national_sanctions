@@ -452,6 +452,12 @@ abstract class AppLocalizations {
   /// **'Persons'**
   String get persons;
 
+  /// No description provided for @vessels.
+  ///
+  /// In en, this message translates to:
+  /// **'Vessels '**
+  String get vessels;
+
   /// No description provided for @unIndividualsDescription.
   ///
   /// In en, this message translates to:
@@ -475,6 +481,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search entities included in the national sanctions list.'**
   String get nationalEntitiesDescription;
+
+  /// No description provided for @nationalvesselsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search vessels included in the national sanctions list.'**
+  String get nationalvesselsDescription;
 
   /// No description provided for @searchByNameIdReference.
   ///
