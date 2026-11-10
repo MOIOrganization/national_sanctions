@@ -16,6 +16,9 @@ class NationalEntityDetailsPage extends StatelessWidget {
   static const Set<String> _handledKeys = {
     'ID',
     'LS',
+    'NAME_AR',
+    'NAME_EN',
+    'ENTITY_LOCATION',
     'ENTITY_NAME_IN_ARABIC',
     'ENTITY_NAME_IN_ENGLISH',
     'RECORDED_NAME',
@@ -44,12 +47,14 @@ class NationalEntityDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final String arabicName = DetailFields.text(
-      entity['ENTITY_NAME_IN_ARABIC'],
-    );
-    final String englishName = DetailFields.text(
-      entity['ENTITY_NAME_IN_ENGLISH'],
-    );
+    final String arabicName = DetailFields.text(entity['NAME_AR']).isNotEmpty
+        ? DetailFields.text(entity['NAME_AR'])
+        : DetailFields.text(entity['ENTITY_NAME_IN_ARABIC']);
+
+    final String englishName = DetailFields.text(entity['NAME_EN']).isNotEmpty
+        ? DetailFields.text(entity['NAME_EN'])
+        : DetailFields.text(entity['ENTITY_NAME_IN_ENGLISH']);
+
     final names = DisplayNames.resolve(
       fallback: l10n.unnamedEntity,
       first: arabicName,
@@ -87,6 +92,10 @@ class NationalEntityDetailsPage extends StatelessWidget {
               DetailRow(
                 label: l10n.entityType,
                 value: DetailFields.text(entity['ENTITY_TYPE']),
+              ),
+              DetailRow(
+                label: 'Entity Location',
+                value: DetailFields.text(entity['ENTITY_LOCATION']),
               ),
               DetailRow(
                 label: l10n.legalStatus,

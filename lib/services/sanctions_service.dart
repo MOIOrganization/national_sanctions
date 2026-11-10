@@ -738,9 +738,9 @@ class SanctionsService {
         if (item is Map) {
           debugPrint(
             '🏢 [NATIONAL ENTITY] '
-            'ID=${item['ID']} '
-            '| Arabic=${item['ENTITY_NAME_IN_ARABIC'] ?? ''} '
-            '| English=${item['ENTITY_NAME_IN_ENGLISH'] ?? ''}',
+            'Arabic=${item['NAME_AR'] ?? ''} '
+            '| English=${item['NAME_EN'] ?? ''} '
+            '| Location=${item['ENTITY_LOCATION'] ?? ''}',
           );
         }
       }

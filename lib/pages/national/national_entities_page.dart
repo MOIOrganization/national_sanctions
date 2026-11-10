@@ -154,6 +154,9 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
 
       final String searchable = [
         _text(entity['ID']),
+        _text(entity['NAME_AR']),
+        _text(entity['NAME_EN']),
+        _text(entity['ENTITY_LOCATION']),
         _text(entity['ENTITY_NAME_IN_ARABIC']),
         _text(entity['ENTITY_NAME_IN_ENGLISH']),
         _text(entity['RECORDED_NAME']),
@@ -297,11 +300,20 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
           }
 
           final entity = _filteredEntities[index];
+
+          final String arabicName = _text(entity['NAME_AR']).isNotEmpty
+              ? _text(entity['NAME_AR'])
+              : _text(entity['ENTITY_NAME_IN_ARABIC']);
+
+          final String englishName = _text(entity['NAME_EN']).isNotEmpty
+              ? _text(entity['NAME_EN'])
+              : _text(entity['ENTITY_NAME_IN_ENGLISH']);
+
           final names = DisplayNames.resolve(
             fallback: l10n.unnamedEntity,
-            first: _text(entity['ENTITY_NAME_IN_ARABIC']),
-            second: _text(entity['ENTITY_NAME_IN_ENGLISH']).isNotEmpty
-                ? _text(entity['ENTITY_NAME_IN_ENGLISH'])
+            first: arabicName,
+            second: englishName.isNotEmpty
+                ? englishName
                 : _text(entity['RECORDED_NAME']),
           );
 
@@ -312,7 +324,10 @@ class _NationalEntitiesPageState extends State<NationalEntitiesPage> {
             identifier: _text(entity['ID']).isEmpty
                 ? null
                 : _text(entity['ID']),
-            chips: [_text(entity['ENTITY_TYPE'])],
+            chips: [
+              _text(entity['ENTITY_LOCATION']),
+              _text(entity['ENTITY_TYPE']),
+            ],
             onTap: () => _openDetails(entity),
           );
         },
