@@ -188,7 +188,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unSanctions => 'UN Sanctions';
 
   @override
-  String get nationalSanctions => 'National Sanctions';
+  String get nationalSanctions => 'National List';
 
   @override
   String get individuals => 'Individuals';

@@ -65,12 +65,11 @@
   "unDescription": "Search individuals and entities on official UN sanctions lists.",
   "nationalDescription": "Search persons and entities on the national sanctions list.",
   "unSanctions": "UN Sanctions",
-  "nationalSanctions": "National Sanctions",
+  "nationalSanctions": "National List",
   "individuals": "Individuals",
   "entities": "Entities",
   "persons": "Persons",
   "vessels": "Vessels ",
-
   "unIndividualsDescription": "Search individuals by ID, name, nationality or reference number.",
   "unEntitiesDescription": "Search companies, organisations and other listed entities.",
   "nationalPersonsDescription": "Search persons included in the national sanctions list.",

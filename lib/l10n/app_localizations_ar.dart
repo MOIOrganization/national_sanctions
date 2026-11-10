@@ -188,7 +188,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unSanctions => 'عقوبات الأمم المتحدة';
 
   @override
-  String get nationalSanctions => 'العقوبات الوطنية';
+  String get nationalSanctions => 'القائمة الوطنية';
 
   @override
   String get individuals => 'الأشخاص';

@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @nationalSanctions.
   ///
   /// In en, this message translates to:
-  /// **'National Sanctions'**
+  /// **'National List'**
   String get nationalSanctions;
 
   /// No description provided for @individuals.
