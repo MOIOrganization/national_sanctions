@@ -60,7 +60,6 @@ class HomePage extends StatelessWidget {
           onTap: onOpenNationalSanctions,
         ),
         const SizedBox(height: AppSpacing.lg),
-        NoticeBanner(message: l10n.officialSourceDisclaimer),
       ],
     );
   }

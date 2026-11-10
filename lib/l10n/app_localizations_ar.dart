@@ -216,10 +216,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'ابحث عن الكيانات المدرجة في القائمة الوطنية للعقوبات.';
 
   @override
-  String get officialSourceDisclaimer =>
-      'يجب دائماً التحقق من المعلومات من المصدر الرسمي قبل اتخاذ أي قرار قانوني أو امتثالي.';
-
-  @override
   String get searchByNameIdReference =>
       'البحث بالاسم أو الرقم أو الرقم المرجعي';
 

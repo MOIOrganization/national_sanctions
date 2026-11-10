@@ -216,10 +216,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Search entities included in the national sanctions list.';
 
   @override
-  String get officialSourceDisclaimer =>
-      'Information should always be verified against the official source before making a legal or compliance decision.';
-
-  @override
   String get searchByNameIdReference =>
       'Search by name, ID or reference number';
 

@@ -39,7 +39,6 @@ class UnSanctionsPage extends StatelessWidget {
           onTap: onOpenEntities,
         ),
         const SizedBox(height: AppSpacing.lg),
-        NoticeBanner(message: l10n.officialSourceDisclaimer),
       ],
     );
   }

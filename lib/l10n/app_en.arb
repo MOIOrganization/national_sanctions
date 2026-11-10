@@ -73,7 +73,6 @@
   "unEntitiesDescription": "Search companies, organisations and other listed entities.",
   "nationalPersonsDescription": "Search persons included in the national sanctions list.",
   "nationalEntitiesDescription": "Search entities included in the national sanctions list.",
-  "officialSourceDisclaimer": "Information should always be verified against the official source before making a legal or compliance decision.",
   "searchByNameIdReference": "Search by name, ID or reference number",
   "searchByNameIdRecorded": "Search by name, ID or recorded name",
   "showingCount": "Showing {loaded} of {total}",

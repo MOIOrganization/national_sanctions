@@ -63,7 +63,6 @@
   "unEntitiesDescription": "ابحث عن الشركات والمنظمات والكيانات المدرجة الأخرى.",
   "nationalPersonsDescription": "ابحث عن الأشخاص المدرجين في القائمة الوطنية للعقوبات.",
   "nationalEntitiesDescription": "ابحث عن الكيانات المدرجة في القائمة الوطنية للعقوبات.",
-  "officialSourceDisclaimer": "يجب دائماً التحقق من المعلومات من المصدر الرسمي قبل اتخاذ أي قرار قانوني أو امتثالي.",
   "searchByNameIdReference": "البحث بالاسم أو الرقم أو الرقم المرجعي",
   "searchByNameIdRecorded": "البحث بالاسم أو الرقم أو الاسم المسجل",
   "showingCount": "عرض {loaded} من {total}",

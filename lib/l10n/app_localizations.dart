@@ -476,12 +476,6 @@ abstract class AppLocalizations {
   /// **'Search entities included in the national sanctions list.'**
   String get nationalEntitiesDescription;
 
-  /// No description provided for @officialSourceDisclaimer.
-  ///
-  /// In en, this message translates to:
-  /// **'Information should always be verified against the official source before making a legal or compliance decision.'**
-  String get officialSourceDisclaimer;
-
   /// No description provided for @searchByNameIdReference.
   ///
   /// In en, this message translates to:

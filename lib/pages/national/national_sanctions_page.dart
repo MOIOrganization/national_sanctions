@@ -44,7 +44,6 @@ class NationalSanctionsPage extends StatelessWidget {
           },
         ),
         const SizedBox(height: AppSpacing.lg),
-        NoticeBanner(message: l10n.officialSourceDisclaimer),
       ],
     );
   }
