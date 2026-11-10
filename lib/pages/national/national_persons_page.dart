@@ -303,11 +303,13 @@ class _NationalPersonsPageState extends State<NationalPersonsPage> {
           final names = DisplayNames.resolve(
             fallback: l10n.unnamedPerson,
             first: _firstText(person, [
+              'NAME_AR',
               'PERSON_NAME_IN_ARABIC',
               'NAME_IN_ARABIC',
               'FULL_NAME_ARABIC',
             ]),
             second: _firstText(person, [
+              'NAME_EN',
               'PERSON_NAME_IN_ENGLISH',
               'NAME_IN_ENGLISH',
               'FULL_NAME_ENGLISH',

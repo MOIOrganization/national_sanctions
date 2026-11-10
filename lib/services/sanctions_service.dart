@@ -689,8 +689,9 @@ class SanctionsService {
         if (item is Map) {
           debugPrint(
             '👤 [NATIONAL PERSON] '
-            'ID=${item['ID']} '
-            '| Name=${item['PERSON_NAME_IN_ARABIC'] ?? item['PERSON_NAME_IN_ENGLISH'] ?? ''}',
+            'Name AR=${item['NAME_AR'] ?? ''} '
+            '| Name EN=${item['NAME_EN'] ?? ''} '
+            '| Nationality=${item['NATIONALITY'] ?? ''}',
           );
         }
       }

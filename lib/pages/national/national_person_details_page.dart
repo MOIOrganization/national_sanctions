@@ -16,6 +16,8 @@ class NationalPersonDetailsPage extends StatelessWidget {
   static const Set<String> _handledKeys = {
     'ID',
     'LS',
+    'NAME_AR',
+    'NAME_EN',
     'PERSON_NAME_IN_ARABIC',
     'NAME_IN_ARABIC',
     'FULL_NAME_ARABIC',
@@ -69,11 +71,14 @@ class NationalPersonDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final String arabicName = _first([
+      person['NAME_AR'],
       person['PERSON_NAME_IN_ARABIC'],
       person['NAME_IN_ARABIC'],
       person['FULL_NAME_ARABIC'],
     ]);
+
     final String englishName = _first([
+      person['NAME_EN'],
       person['PERSON_NAME_IN_ENGLISH'],
       person['NAME_IN_ENGLISH'],
       person['FULL_NAME_ENGLISH'],
